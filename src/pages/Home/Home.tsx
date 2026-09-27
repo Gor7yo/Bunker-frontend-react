@@ -1,14 +1,15 @@
 import { observer } from "mobx-react-lite";
 import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
+import { Wifi, WifiOff, DoorOpen, Plus, Loader2 } from "lucide-react";
 import { useSocket } from "../../hooks/useSocket";
 import styles from "./Home.module.css";
 import { ReconnectBtn } from "../../components/ReconnectBtn/ReconnectBtn";
 import { gameStore } from "../../store/gameStore";
 
 export const Home = observer(() => {
-  const { socket, isConnected } = useSocket();
   const navigate = useNavigate();
+  const { socket, isConnected } = useSocket();
 
   const [playerName, setPlayerName] = useState(gameStore.playerName || "");
   const [roomCode, setRoomCode] = useState(gameStore.roomCode || "");
@@ -26,7 +27,7 @@ export const Home = observer(() => {
     const onCreated = (data: any) => {
       setIsCreating(false);
 
-      const currentName = playerName.trim() || gameStore.playerName || "Игрок";
+      const currentName = playerName.trim() || gameStore.playerName || "Player";
 
       gameStore.setRoomCode(data.roomCode);
       gameStore.setPlayerName(currentName);
@@ -40,7 +41,7 @@ export const Home = observer(() => {
     };
 
     const onJoined = (data: any) => {
-      const currentName = playerName.trim() || gameStore.playerName || "Игрок";
+      const currentName = playerName.trim() || gameStore.playerName || "Player";
 
       gameStore.setRoomCode(data.roomCode);
       gameStore.setPlayerName(currentName);
@@ -70,7 +71,7 @@ export const Home = observer(() => {
   const handleCreateRoom = () => {
     const trimmedName = playerName.trim();
     if (!trimmedName) {
-      setError("Введите имя");
+      setError("Enter your name");
       return;
     }
 
@@ -88,12 +89,12 @@ export const Home = observer(() => {
     const trimmedCode = roomCode.trim().toUpperCase();
 
     if (!trimmedName) {
-      setError("Введите имя");
+      setError("Enter your name");
       return;
     }
 
     if (!trimmedCode) {
-      setError("Введите код комнаты");
+      setError("Enter room code");
       return;
     }
 
@@ -111,56 +112,75 @@ export const Home = observer(() => {
   return (
     <div className={styles.container}>
       <div className={styles.card}>
-        <h1 className={styles.title}>🏚️ Бункер</h1>
-        <p className={styles.subtitle}>Выживи в мире сталкеров</p>
+        <h1 className={styles.title}>Bunker</h1>
+        <p className={styles.subtitle}>Survive in the world of stalkers</p>
 
         {error && <div className={styles.error}>{error}</div>}
-
-        {gameStore.roomCode && gameStore.playerName && (
-          <ReconnectBtn
-            roomCode={gameStore.roomCode}
-          />
-        )}
 
         <div className={styles.form}>
           <input
             className={styles.input}
-            placeholder="Ваше имя"
+            placeholder="Your name"
             value={playerName}
             onChange={(e) => updatePlayerName(e.target.value)}
           />
 
-          <div className={styles.divider}>или</div>
-
           <div className={styles.joinRow}>
             <input
               className={styles.inputSmall}
-              placeholder="Код комнаты"
+              placeholder="Room code"
               value={roomCode}
               maxLength={6}
               onChange={(e) => setRoomCode(e.target.value.toUpperCase())}
             />
 
             <button
+              type="button"
               className={`${styles.button} ${styles.buttonSecondary}`}
               onClick={handleJoinRoom}
             >
-              Войти
+              <DoorOpen size={18} />
+              <span>Join</span>
             </button>
           </div>
 
           <button
+            type="button"
             disabled={isCreating}
             className={`${styles.button} ${styles.buttonPrimary}`}
             onClick={handleCreateRoom}
           >
-            {isCreating ? "Создание..." : "🚀 Создать комнату"}
+            {isCreating ? (
+              <>
+                <Loader2 size={18} className={styles.spinner} />
+                <span>Creating...</span>
+              </>
+            ) : (
+              <>
+                <Plus size={18} />
+                <span>Create room</span>
+              </>
+            )}
           </button>
         </div>
 
         <div className={styles.status}>
-          {isConnected ? "✅ Подключено" : "⏳ Подключение..."}
+          {isConnected ? (
+            <>
+              <Wifi size={14} />
+              <span>Connected</span>
+            </>
+          ) : (
+            <>
+              <WifiOff size={14} />
+              <span>Connecting...</span>
+            </>
+          )}
         </div>
+
+        {gameStore.roomCode && gameStore.playerName && (
+          <ReconnectBtn roomCode={gameStore.roomCode} />
+        )}
       </div>
     </div>
   );

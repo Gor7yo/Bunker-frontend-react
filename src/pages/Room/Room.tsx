@@ -11,8 +11,8 @@ import styles from "./Room.module.css";
 
 export const Room = observer(() => {
   const navigate = useNavigate();
-
   const { socket, isConnected } = useSocket();
+
   const store = gameStore;
   const roomCode = store.roomCode;
 
@@ -69,6 +69,7 @@ export const Room = observer(() => {
 
     const onPlayerJoined = (data: any) => {
       console.log("👤 Игрок вошел", data);
+      store.setGameState("READY_CHECK");
 
       if (data.players) {
         store.setPlayers(data.players);
@@ -80,12 +81,17 @@ export const Room = observer(() => {
 
       if (data.players) {
         store.setPlayers(data.players);
+
+        if (store.players.length === 1) {
+          store.setIsHost(true);
+        }
       }
     };
 
     const onReadyUpdated = (data: any) => {
       console.log("✅ Ready update", data);
-
+      store.setGameState("READY_CHECK");
+      console.log("GAME STATE: ", store.gameState);
       if (data.players) {
         store.setPlayers(data.players);
       }
@@ -99,6 +105,8 @@ export const Room = observer(() => {
       if (data.players) {
         store.setPlayers(data.players);
       }
+
+      navigate(`/game`);
     };
 
     const onCardReceived = (data: any) => {
@@ -111,33 +119,41 @@ export const Room = observer(() => {
 
     const onError = (data: any) => {
       console.error("❌ room:error", data);
-      alert(data.message);
+      navigate('/')
+    };
+
+    const onReconnectError = (data: any) => {
+      console.error("❌ room:reconnectError", data);
+      navigate("/");
     };
 
     const onLeft = (data: any) => {
       console.log("👋 Выход из комнаты", data);
       store.reset();
+      store.clearStorage();
       navigate("/");
     };
 
     socket.on("room:joined", onJoined);
     socket.on("room:playerJoined", onPlayerJoined);
-    socket.on("player:left", onPlayerLeft);
     socket.on("room:playersUpdated", onReadyUpdated);
-    socket.on("game:started", onGameStarted);
-    socket.on("player:cardReceived", onCardReceived);
-    socket.on("room:error", onError);
     socket.on("room:left", onLeft);
+    socket.on("room:error", onError);
+    socket.on("room:reconnectError", onReconnectError);
+    socket.on("game:started", onGameStarted);
+    socket.on("players:left", onPlayerLeft);
+    socket.on("player:cardReceived", onCardReceived);
 
     return () => {
       socket.off("room:joined", onJoined);
       socket.off("room:playerJoined", onPlayerJoined);
-      socket.off("player:left", onPlayerLeft);
+      socket.off("room:error", onError);
+      socket.off("room:reconnectError", onReconnectError);
+      socket.off("room:left", onLeft);
       socket.off("room:playersUpdated", onReadyUpdated);
       socket.off("game:started", onGameStarted);
+      socket.off("player:left", onPlayerLeft);
       socket.off("player:cardReceived", onCardReceived);
-      socket.off("room:error", onError);
-      socket.off("room:left", onLeft);
     };
   }, [socket, navigate, store]);
 
@@ -182,25 +198,18 @@ export const Room = observer(() => {
     });
   }, [socket, roomCode, store.isHost]);
 
-  const handleGetMyCard = useCallback(() => {
-    if (!socket || !roomCode) return;
-
-    socket.emit("player:myCard", {
-      roomCode,
-    });
-  }, [socket, roomCode]);
-
   const handleLeave = useCallback(() => {
     if (!confirm("Выйти из комнаты?")) return;
 
-    if (socket && roomCode) {
-      socket.emit("room:leave", { roomCode });
-    }
+    if (!socket || !roomCode) return;
 
-    store.reset();
-    store.clearStorage();
-    navigate("/");
-  }, [socket, roomCode, navigate, store]);
+    console.log(store.playerName, roomCode);
+
+    socket.emit("player:left", {
+      playerName: store.playerName,
+      roomCode,
+    });
+  }, [socket, roomCode, store.playerName]);
 
   return (
     <div className={styles.container}>
@@ -263,15 +272,6 @@ export const Room = observer(() => {
                     : "⏳ Ожидание готовности всех игроков"}
                 </button>
               )}
-            </div>
-          )}
-
-          {store.gameState === "GAME_RUNNING" && (
-            <div className={styles.gameInfo}>
-              <h3>🎮 Игра идёт</h3>
-              <button onClick={handleGetMyCard} className={styles.cardBtn}>
-                🃏 Показать мою карту
-              </button>
             </div>
           )}
         </div>

@@ -1,4 +1,5 @@
 import { makeAutoObservable, reaction, toJS } from "mobx";
+import type { Socket } from "socket.io-client";
 
 export interface IPlayer {
   id: string;
@@ -9,7 +10,19 @@ export interface IPlayer {
   characters?: any;
 }
 
-interface IPlayerCard {
+export interface IPlayerCard {
+  age: string | null;
+  profession: string | null;
+  health: string | null;
+  fobia: string | null;
+  hobbie: string | null;
+  bandage: string | null;
+  action: string | null;
+  fact: string | null;
+}
+
+interface IPlayerCardHost {
+  playerName: string | null;
   age: string | null;
   profession: string | null;
   health: string | null;
@@ -21,22 +34,29 @@ interface IPlayerCard {
 }
 
 const STORAGE_KEYS = {
-  GAME_DATA: 'gameData',
-  SOCKET_ID: 'socketId',
-  PLAYER_NAME: 'playerName',
+  GAME_DATA: "gameData",
+  SOCKET_ID: "socketId",
+  PLAYER_NAME: "playerName",
 } as const;
 
 export default class GameStateStore {
   roomCode: string | null = null;
   players: IPlayer[] = [];
-  gameState: "WAITING" | "READY_CHECK" | "GAME_RUNNING" | "FINISHED" = "WAITING";
+  gameState: "WAITING" | "READY_CHECK" | "GAME_RUNNING" | "FINISHED" =
+    "WAITING";
   isHost: boolean = false;
   playerName: string = "";
   myCard: IPlayerCard | null = null;
   mySocketId: string | null = null;
 
+  socket: Socket | null = null;
+  isConnected: boolean = false;
+
   get allReady(): boolean {
-    return this.players.length > 0 && this.players.every((player) => player.isReady === true);
+    return (
+      this.players.length > 0 &&
+      this.players.every((player) => player.isReady === true)
+    );
   }
 
   get myPlayer(): IPlayer | undefined {
@@ -44,7 +64,9 @@ export default class GameStateStore {
   }
 
   get allDead(): boolean {
-    return this.players.length > 0 && this.players.every((p) => p.isAlive === false);
+    return (
+      this.players.length > 0 && this.players.every((p) => p.isAlive === false)
+    );
   }
 
   constructor(initialState?: Partial<GameStateStore>) {
@@ -56,7 +78,7 @@ export default class GameStateStore {
         setupAutoSave: false,
         clearStorage: false,
       },
-      { autoBind: true }
+      { autoBind: true },
     );
 
     this.loadFromStorage();
@@ -78,12 +100,12 @@ export default class GameStateStore {
           isReady: p.isReady,
           isHost: p.isHost,
           isAlive: p.isAlive,
-          characters: p.characters,
         })),
         playerName: this.playerName,
         isHost: this.isHost,
         gameState: this.gameState,
         mySocketId: this.mySocketId,
+        isConnected: this.isConnected,
       }),
       (data) => {
         this.saveToStorage(data);
@@ -91,23 +113,23 @@ export default class GameStateStore {
       {
         fireImmediately: false,
         delay: 300,
-      }
+      },
     );
   };
 
   saveToStorage = (data: any): void => {
     try {
       localStorage.setItem(STORAGE_KEYS.GAME_DATA, JSON.stringify(data));
-      
+
       if (this.mySocketId) {
         localStorage.setItem(STORAGE_KEYS.SOCKET_ID, this.mySocketId);
       }
-      
+
       if (this.playerName) {
         localStorage.setItem(STORAGE_KEYS.PLAYER_NAME, this.playerName);
       }
-      
-      console.log('💾 Данные сохранены в localStorage');
+
+      console.log("💾 Данные сохранены в localStorage");
     } catch (error) {
       console.error("❌ Failed to save data:", error);
     }
@@ -118,24 +140,24 @@ export default class GameStateStore {
       const savedData = localStorage.getItem(STORAGE_KEYS.GAME_DATA);
       if (savedData) {
         const data = JSON.parse(savedData);
-        
+
         this.roomCode = data.roomCode || null;
         this.players = data.players || [];
         this.playerName = data.playerName || "";
         this.isHost = data.isHost || false;
         this.gameState = data.gameState || "WAITING";
         this.mySocketId = data.mySocketId || null;
-        
-        console.log('📂 Данные загружены из localStorage');
+
+        console.log("📂 Данные загружены из localStorage");
       }
-      
+
       if (!this.mySocketId) {
         const socketId = localStorage.getItem(STORAGE_KEYS.SOCKET_ID);
         if (socketId) {
           this.mySocketId = socketId;
         }
       }
-      
+
       if (!this.playerName) {
         const playerName = localStorage.getItem(STORAGE_KEYS.PLAYER_NAME);
         if (playerName) {
@@ -162,17 +184,17 @@ export default class GameStateStore {
       isHost: this.isHost,
       gameState: this.gameState,
       mySocketId: this.mySocketId,
+      isConnected: this.isConnected,
     };
     this.saveToStorage(data);
   };
 
-  // Метод для очистки хранилища
   clearStorage = (): void => {
     try {
       localStorage.removeItem(STORAGE_KEYS.GAME_DATA);
       localStorage.removeItem(STORAGE_KEYS.SOCKET_ID);
       localStorage.removeItem(STORAGE_KEYS.PLAYER_NAME);
-      console.log('🗑️ localStorage очищен');
+      console.log("🗑️ localStorage очищен");
     } catch (error) {
       console.error("❌ Failed to clear storage:", error);
     }
@@ -187,7 +209,9 @@ export default class GameStateStore {
     this.players = players;
   };
 
-  setGameState = (gameState: "WAITING" | "READY_CHECK" | "GAME_RUNNING" | "FINISHED"): void => {
+  setGameState = (
+    gameState: "WAITING" | "READY_CHECK" | "GAME_RUNNING" | "FINISHED",
+  ): void => {
     this.gameState = gameState;
   };
 
@@ -219,6 +243,14 @@ export default class GameStateStore {
     }
   };
 
+  setSocket = (socket: Socket) => {
+    this.socket = socket;
+  };
+
+  setIsConnected = (isConnected: boolean) => {
+    this.isConnected = isConnected;
+  };
+
   updatePlayer = (playerId: string, updates: Partial<IPlayer>): void => {
     const index = this.players.findIndex((p) => p.id === playerId);
     if (index !== -1) {
@@ -229,6 +261,15 @@ export default class GameStateStore {
   addPlayer = (player: IPlayer): void => {
     if (!this.players.find((p) => p.id === player.id)) {
       this.players.push(player);
+    }
+  };
+
+  addPlayerCard = (playerName: string, card: IPlayerCard): void => {
+    const player = this.players.find((p) => p.name === playerName);
+    if (!player) {
+      this.players.map((p) =>
+        p.name === playerName ? (p.characters = card) : p,
+      );
     }
   };
 
@@ -251,7 +292,7 @@ export default class GameStateStore {
     this.playerName = "";
     this.myCard = null;
     this.mySocketId = null;
-    
+
     this.clearStorage();
   };
 }

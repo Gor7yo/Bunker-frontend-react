@@ -1,6 +1,7 @@
 import styles from "./PlayerCard.module.css";
 
 interface PlayerCardProps {
+  name?: string;
   character: {
     age: string;
     profession: string;
@@ -14,7 +15,11 @@ interface PlayerCardProps {
   onGetMyCard?: () => void;
 }
 
-export const PlayerCard = ({ character, onGetMyCard }: PlayerCardProps) => {
+export const PlayerCard = ({
+  name,
+  character,
+  onGetMyCard,
+}: PlayerCardProps) => {
   const fields = [
     { label: "🎂 Возраст", value: character.age },
     { label: "💼 Профессия", value: character.profession },

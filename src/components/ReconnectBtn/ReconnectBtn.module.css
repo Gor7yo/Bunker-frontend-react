@@ -1,15 +1,15 @@
-/* styles.module.css */
-
 .reconnectBtn {
   display: inline-block;
-  margin: 0;
+  margin-top: 10px;
   padding: 0;
+  width: 100%;
 }
 
 .context {
   display: inline-block;
+  width: 100%;
   padding: 14px 36px;
-  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  background: linear-gradient(135deg, #7a7a7a44 0%, #4141416e 100%);
   color: #ffffff;
   font-size: 16px;
   font-weight: 600;
@@ -20,27 +20,12 @@
   border: none;
   position: relative;
   overflow: hidden;
-  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-  box-shadow: 0 4px 15px rgba(102, 126, 234, 0.4);
+  transition: all 0.35s cubic-bezier(0.4, 0, 0.2, 1);
+  box-shadow: 0 8px 24px -8px rgba(124, 92, 255, 0.6);
   cursor: pointer;
+  font-family: inherit;
 }
 
-/* Hover эффект */
-.context:hover {
-  transform: translateY(-2px) scale(1.02);
-  box-shadow: 0 8px 30px rgba(102, 126, 234, 0.6);
-  background: linear-gradient(135deg, #764ba2 0%, #667eea 100%);
-  color: #ffffff;
-  text-decoration: none;
-}
-
-/* Активное состояние (при клике) */
-.context:active {
-  transform: translateY(0px) scale(0.98);
-  box-shadow: 0 2px 10px rgba(102, 126, 234, 0.3);
-}
-
-/* Эффект пульсации */
 .context::before {
   content: '';
   position: absolute;
@@ -49,25 +34,52 @@
   width: 0;
   height: 0;
   border-radius: 50%;
-  background: rgba(255, 255, 255, 0.3);
+  background: rgba(255, 255, 255, 0.25);
   transform: translate(-50%, -50%);
-  transition: width 0.6s, height 0.6s;
+  transition: width 0.7s cubic-bezier(0.4, 0, 0.2, 1),
+              height 0.7s cubic-bezier(0.4, 0, 0.2, 1),
+              opacity 0.7s cubic-bezier(0.4, 0, 0.2, 1);
+  opacity: 0;
 }
 
-.context:hover::before {
-  width: 300px;
-  height: 300px;
-}
-
-/* Анимация иконки переподключения (опционально) */
 .context::after {
   content: '↻';
   display: inline-block;
   margin-left: 10px;
   font-size: 20px;
-  transition: transform 0.6s ease;
+  transition: transform 0.7s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.context:hover {
+  transform: translateY(-3px) scale(1.02);
+  box-shadow:
+    0 16px 40px -10px rgba(124, 92, 255, 0.75),
+    0 0 30px -8px rgba(168, 85, 247, 0.5);
+    background: linear-gradient(135deg, #7a7a7a44 0%, #5a5a5a6e 100%);
+
+  color: #ffffff;
+  text-decoration: none;
+}
+
+.context:hover::before {
+  width: 420px;
+  height: 320px;
+  opacity: 1;
 }
 
 .context:hover::after {
   transform: rotate(360deg);
+}
+
+.context:active {
+  transform: translateY(0) scale(0.97);
+  box-shadow: 0 4px 14px -4px rgba(124, 92, 255, 0.5);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .context,
+  .context::before,
+  .context::after {
+    transition-duration: 0.01ms !important;
+  }
 }

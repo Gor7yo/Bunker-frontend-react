@@ -16,6 +16,8 @@ export const ReconnectBtn = ({ roomCode, playerName }: ReconnectProps) => {
   const [isReconnecting, setIsReconnecting] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
+  console.log(isReconnecting, isConnected);
+
   useEffect(() => {
     if (!socket) return;
 
@@ -49,7 +51,7 @@ export const ReconnectBtn = ({ roomCode, playerName }: ReconnectProps) => {
       setTimeout(() => {
         gameStore.reset();
         navigate("/");
-      }, 2000);
+      }, 4000);
     };
 
     socket.on("room:reconnectSuccess", onReconnectSuccess);
@@ -85,9 +87,7 @@ export const ReconnectBtn = ({ roomCode, playerName }: ReconnectProps) => {
 
     socket.emit("room:reconnect", {
       roomCode,
-      player: {
-        name: playerNameToUse,
-      },
+      player: playerNameToUse,
     });
 
     setTimeout(() => {
@@ -114,18 +114,12 @@ export const ReconnectBtn = ({ roomCode, playerName }: ReconnectProps) => {
         {isReconnecting ? (
           <>
             <span className={styles.spinner} />
-            Восстановление...
+            Reconnecting...
           </>
         ) : (
-          "Восстановить игру"
+          "Reconnect"
         )}
       </button>
-
-      {!isConnected && (
-        <div className={styles.offlineMessage}>
-          🔴 Нет подключения к серверу
-        </div>
-      )}
     </section>
   );
 };

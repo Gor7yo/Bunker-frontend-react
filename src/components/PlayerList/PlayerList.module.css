@@ -1,8 +1,19 @@
 .container {
-  background: rgba(30, 41, 59, 0.6);
-  border-radius: 16px;
+  background: rgba(22, 22, 48, 0.55);
+  border-radius: 20px;
   padding: 20px;
-  border: 1px solid rgba(255, 255, 255, 0.05);
+  border: 1px solid rgba(140, 120, 255, 0.12);
+  backdrop-filter: blur(20px);
+  -webkit-backdrop-filter: blur(20px);
+  box-shadow:
+    0 10px 40px -10px rgba(0, 0, 0, 0.5),
+    inset 0 1px 0 rgba(255, 255, 255, 0.05);
+  animation: fadeUp 0.6s cubic-bezier(0.4, 0, 0.2, 1) both;
+}
+
+@keyframes fadeUp {
+  from { opacity: 0; transform: translateY(24px); filter: blur(6px); }
+  to { opacity: 1; transform: translateY(0); filter: blur(0); }
 }
 
 .header {
@@ -11,18 +22,25 @@
   align-items: center;
   margin-bottom: 16px;
   padding-bottom: 12px;
-  border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+  border-bottom: 1px solid rgba(140, 120, 255, 0.12);
 }
 
 .title {
   font-size: 18px;
-  font-weight: 600;
-  color: #f1f5f9;
+  font-weight: 700;
+  color: #f5f3ff;
+  letter-spacing: -0.01em;
 }
 
 .count {
-  font-size: 14px;
-  color: #94a3b8;
+  font-size: 13px;
+  font-weight: 600;
+  color: #a5a3c4;
+  padding: 4px 12px;
+  background: rgba(124, 92, 255, 0.15);
+  border: 1px solid rgba(140, 120, 255, 0.2);
+  border-radius: 20px;
+  transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
 }
 
 .list {
@@ -31,17 +49,23 @@
   gap: 8px;
   max-height: 300px;
   overflow-y: auto;
+  padding-right: 4px;
 }
 
 .playerItem {
-  padding: 10px 14px;
-  background: rgba(15, 23, 42, 0.4);
-  border-radius: 10px;
-  transition: all 0.2s;
+  padding: 11px 14px;
+  background: rgba(10, 10, 28, 0.5);
+  border: 1px solid rgba(140, 120, 255, 0.08);
+  border-radius: 12px;
+  transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
+  animation: fadeUp 0.4s cubic-bezier(0.4, 0, 0.2, 1) both;
 }
 
 .playerItem:hover {
-  background: rgba(15, 23, 42, 0.6);
+  background: rgba(10, 10, 28, 0.75);
+  border-color: rgba(140, 120, 255, 0.3);
+  transform: translateX(4px);
+  box-shadow: 0 6px 20px -8px rgba(124, 92, 255, 0.4);
 }
 
 .playerInfo {
@@ -51,32 +75,71 @@
 }
 
 .name {
-  color: #f1f5f9;
+  color: #f5f3ff;
   font-size: 15px;
+  font-weight: 500;
 }
 
 .ready {
-  color: #4ade80;
+  color: #34d399;
   font-size: 13px;
+  font-weight: 600;
+  text-shadow: 0 0 10px rgba(52, 211, 153, 0.5);
 }
 
 .notReady {
-  color: #94a3b8;
+  color: #a5a3c4;
   font-size: 13px;
+  font-weight: 500;
 }
 
 .alive {
-  color: #4ade80;
+  color: #34d399;
   font-size: 13px;
+  font-weight: 600;
+  text-shadow: 0 0 10px rgba(52, 211, 153, 0.5);
 }
 
 .dead {
-  color: #f87171;
+  color: #ff8fa8;
   font-size: 13px;
+  font-weight: 600;
+  text-shadow: 0 0 10px rgba(255, 76, 116, 0.5);
 }
 
 .empty {
-  color: #64748b;
+  color: #6b6990;
   text-align: center;
-  padding: 20px;
+  padding: 24px;
+  font-size: 14px;
+  letter-spacing: 0.02em;
+}
+
+.list::-webkit-scrollbar {
+  width: 6px;
+}
+
+.list::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+.list::-webkit-scrollbar-thumb {
+  background: rgba(124, 92, 255, 0.4);
+  border-radius: 10px;
+}
+
+.list::-webkit-scrollbar-thumb:hover {
+  background: rgba(124, 92, 255, 0.7);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .container,
+  .playerItem {
+    animation-duration: 0.01ms !important;
+  }
+
+  .playerItem,
+  .count {
+    transition-duration: 0.01ms !important;
+  }
 }
