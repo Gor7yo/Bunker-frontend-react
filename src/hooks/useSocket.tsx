@@ -1,4 +1,4 @@
-import { createContext, useContext, useEffect, useRef, useState } from "react";
+import { createContext, useContext, useEffect, useState } from "react";
 import io, { Socket } from "socket.io-client";
 
 const SOCKET_URL = "http://localhost:3000/room";
@@ -13,44 +13,47 @@ const SocketContext = createContext<SocketContextType>({
   isConnected: false,
 });
 
-export const SocketProvider = ({ children }: { children: React.ReactNode }) => {
-  const socketRef = useRef<Socket | null>(null);
+export const SocketProvider = ({
+  children,
+}: {
+  children: React.ReactNode;
+}) => {
+  const [socket, setSocket] = useState<Socket | null>(null);
   const [isConnected, setIsConnected] = useState(false);
 
   useEffect(() => {
-    const socket = io(SOCKET_URL, {
+    const newSocket = io(SOCKET_URL, {
       transports: ["websocket", "polling"],
     });
 
-    socketRef.current = socket;
+    setSocket(newSocket);
 
-    socket.on("connect", () => {
-      console.log("🟢 Socket connected:", socket.id);
+    newSocket.on("connect", () => {
+      console.log("🟢 Socket connected:", newSocket.id);
       setIsConnected(true);
     });
 
-    socket.on("disconnect", () => {
-      console.log("🔴 Socket disconnected");
+    newSocket.on("disconnect", (reason) => {
+      console.log("🔴 Socket disconnected:", newSocket.id, reason);
       setIsConnected(false);
     });
 
-    socket.on("connect_error", (error) => {
+    newSocket.on("connect_error", (error) => {
       console.error("❌ Socket error:", error);
       setIsConnected(false);
     });
 
     return () => {
-      console.log("🧹 SocketProvider cleanup");
-
-      socket.disconnect();
-      socketRef.current = null;
+      newSocket.removeAllListeners();
+      newSocket.disconnect();
+      setSocket(null);
     };
   }, []);
 
   return (
     <SocketContext.Provider
       value={{
-        socket: socketRef.current,
+        socket,
         isConnected,
       }}
     >

@@ -7,6 +7,8 @@ export interface IPlayer {
   isReady: boolean;
   isHost: boolean;
   isAlive: boolean;
+  isOnline: boolean;
+  socketId: string;
   characters?: any;
 }
 
@@ -60,7 +62,7 @@ export default class GameStateStore {
   }
 
   get myPlayer(): IPlayer | undefined {
-    return this.players.find((p) => p.id === this.mySocketId);
+    return this.players.find((p) => p.socketId === this.mySocketId);
   }
 
   get allDead(): boolean {
@@ -100,6 +102,9 @@ export default class GameStateStore {
           isReady: p.isReady,
           isHost: p.isHost,
           isAlive: p.isAlive,
+          isOnline: p.isOnline,
+          socketId: p.socketId,
+          characters: p.characters,
         })),
         playerName: this.playerName,
         isHost: this.isHost,
@@ -178,6 +183,8 @@ export default class GameStateStore {
         isReady: p.isReady,
         isHost: p.isHost,
         isAlive: p.isAlive,
+        isOnline: p.isOnline,
+        socketId: p.socketId,
         characters: p.characters,
       })),
       playerName: this.playerName,
@@ -206,6 +213,16 @@ export default class GameStateStore {
   };
 
   setPlayers = (players: IPlayer[]): void => {
+    console.log("SET PLAYERS:", players);
+    console.log(
+      "ONLINE:",
+      players.map((p) => ({
+        name: p.name,
+        isOnline: p.isOnline,
+        socketId: p.socketId,
+      })),
+    );
+
     this.players = players;
   };
 

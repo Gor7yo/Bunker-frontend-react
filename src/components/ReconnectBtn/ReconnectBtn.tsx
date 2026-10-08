@@ -16,25 +16,27 @@ export const ReconnectBtn = ({ roomCode, playerName }: ReconnectProps) => {
   const [isReconnecting, setIsReconnecting] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
-  console.log(isReconnecting, isConnected);
-
   useEffect(() => {
     if (!socket) return;
 
     const onReconnectSuccess = (data: any) => {
       console.log("✅ Reconnect success:", data);
+
       setIsReconnecting(false);
       setError(null);
 
       if (data.players) {
         gameStore.setPlayers(data.players);
       }
+
       if (data.gameState) {
         gameStore.setGameState(data.gameState);
       }
+
       if (data.player) {
         gameStore.setIsHost(data.player.isHost);
-        gameStore.setMySocketId(data.player.id);
+        gameStore.setMySocketId(data.player.socketId);
+
         if (data.player.characters) {
           gameStore.setMyCard(data.player.characters);
         }

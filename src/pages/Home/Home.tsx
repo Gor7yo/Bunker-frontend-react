@@ -68,6 +68,10 @@ export const Home = observer(() => {
     };
   }, [socket, navigate, playerName]);
 
+  useEffect(() => {
+    gameStore.clearStorage();
+  }, []);
+
   const handleCreateRoom = () => {
     const trimmedName = playerName.trim();
     if (!trimmedName) {
@@ -103,9 +107,7 @@ export const Home = observer(() => {
 
     socket?.emit("room:join", {
       roomCode: trimmedCode,
-      player: {
-        name: trimmedName,
-      },
+      playerName: trimmedName,
     });
   };
 
@@ -146,7 +148,7 @@ export const Home = observer(() => {
 
           <button
             type="button"
-            disabled={isCreating}
+            disabled={isCreating || !isConnected}
             className={`${styles.button} ${styles.buttonPrimary}`}
             onClick={handleCreateRoom}
           >
@@ -178,9 +180,9 @@ export const Home = observer(() => {
           )}
         </div>
 
-        {gameStore.roomCode && gameStore.playerName && (
+        {/* {gameStore.roomCode && gameStore.playerName && (
           <ReconnectBtn roomCode={gameStore.roomCode} />
-        )}
+        )} */}
       </div>
     </div>
   );
