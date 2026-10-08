@@ -1,9 +1,9 @@
 import type { PublicPlayer } from "../api/types";
-import { ParticipantVideo } from "./ParticipantVideo";
+import { MicIndicator, ParticipantMedia } from "./ParticipantMedia";
 import { useVoice } from "./voiceContext";
 import styles from "./voice.module.css";
 
-/** Small camera grid for the lobby. */
+/** Camera grid for the lobby. */
 export const VideoStrip = ({ players, canMute }: { players: PublicPlayer[]; canMute: boolean }) => {
   const { enabled } = useVoice();
   if (!enabled) return null;
@@ -11,9 +11,12 @@ export const VideoStrip = ({ players, canMute }: { players: PublicPlayer[]; canM
   return (
     <div className={styles.strip}>
       {players.map((player) => (
-        <div key={player.id} className={styles.stripItem}>
-          <ParticipantVideo playerId={player.id} name={player.name} size="sm" canMute={canMute} />
-          <span>{player.name}</span>
+        <div key={player.id} className={styles.stripTile}>
+          <ParticipantMedia playerId={player.id} name={player.name} />
+          <span className={styles.stripName}>
+            {player.name}
+            <MicIndicator playerId={player.id} canMute={canMute} />
+          </span>
         </div>
       ))}
     </div>

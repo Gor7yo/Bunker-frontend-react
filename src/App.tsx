@@ -1,7 +1,7 @@
 import { lazy, Suspense } from "react";
 import { Navigate, Route, Routes } from "react-router-dom";
 
-import { Page, Spinner } from "./components/ui";
+import { Page, Spinner, Toaster } from "./components/ui";
 import { CreateRoom } from "./pages/CreateRoom/CreateRoom";
 import { Home } from "./pages/Home/Home";
 
@@ -17,6 +17,7 @@ const Loading = () => (
 function App() {
   return (
     <Suspense fallback={<Loading />}>
+      <Toaster />
       <Routes>
         <Route path="/" element={<Home />} />
         <Route path="/create" element={<CreateRoom />} />

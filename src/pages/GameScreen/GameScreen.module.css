@@ -1,53 +1,166 @@
-.page {
-  max-width: 1360px;
-}
-
-/* ---- header ---------------------------------------------------------- */
-
-.header {
-  flex-direction: row;
-  align-items: center;
-  justify-content: space-between;
-  flex-wrap: wrap;
-}
-
-.headerInfo {
+/* The game takes the whole viewport: top bar, phase bar, camera grid. */
+.screen {
   display: flex;
   flex-direction: column;
-  gap: var(--space-2);
+  gap: var(--space-3);
+  height: 100dvh;
+  padding: var(--space-3) var(--page-gutter);
+}
+
+/* ---- top bar --------------------------------------------------------- */
+
+.topbar {
+  position: relative;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-3);
+  flex-wrap: wrap;
+  padding: var(--space-2) var(--space-3);
+  background: var(--color-surface);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-lg);
+}
+
+.topbar::before {
+  content: "";
+  position: absolute;
+  inset: -1px -1px auto;
+  height: 4px;
+  background: var(--hazard-stripes);
+  border-radius: var(--radius-lg) var(--radius-lg) 0 0;
+}
+
+.topInfo {
+  display: flex;
+  align-items: center;
+  gap: var(--space-3);
   min-width: 0;
 }
 
 .title {
-  font-size: var(--text-xl);
-  overflow-wrap: anywhere;
+  font-size: var(--text-lg);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
 }
 
-.meta,
-.headerActions {
+.topActions {
   display: flex;
   align-items: center;
   gap: var(--space-2);
   flex-wrap: wrap;
 }
 
-/* ---- phase banner ---------------------------------------------------- */
+.divider {
+  width: 1px;
+  height: 24px;
+  background: var(--color-border);
+}
+
+.pulse {
+  animation: glow 1.4s ease-in-out infinite;
+}
+
+@keyframes glow {
+  50% {
+    box-shadow: 0 0 0 4px var(--color-accent-soft), var(--shadow-accent);
+  }
+}
+
+/* ---- phase bar ------------------------------------------------------- */
 
 .banner {
-  position: sticky;
-  top: var(--space-2);
-  z-index: 2;
+  position: relative;
+  overflow: hidden;
   display: flex;
   align-items: center;
   justify-content: space-between;
   gap: var(--space-4);
   flex-wrap: wrap;
-  padding: var(--space-4) var(--space-5);
+  padding: var(--space-2) var(--space-4);
   background: var(--color-surface-2);
   border: 1px solid var(--color-border-strong);
   border-left: 4px solid var(--color-accent);
   border-radius: var(--radius-lg);
-  box-shadow: var(--shadow-md);
+}
+
+/* Round steps: Раскрытие → Обсуждение → Голосование → Изгнание */
+.steps {
+  display: flex;
+  gap: var(--space-1);
+  flex-basis: 100%;
+  flex-wrap: wrap;
+  margin-bottom: calc(-1 * var(--space-2));
+}
+
+.step {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 2px 10px;
+  border-radius: var(--radius-full);
+  font-size: var(--text-xs);
+  color: var(--color-text-muted);
+  background: rgb(255 255 255 / 0.03);
+  transition:
+    color var(--duration) var(--ease),
+    background-color var(--duration) var(--ease);
+}
+
+.step + .step::before {
+  content: "›";
+  margin-right: 4px;
+  margin-left: -8px;
+  color: var(--color-border-strong);
+}
+
+.stepDot {
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: currentColor;
+}
+
+.stepDone {
+  color: var(--color-success);
+}
+
+.stepCurrent {
+  color: var(--color-text-inverse);
+  background: var(--color-accent);
+  font-weight: 600;
+  animation: pop-in 320ms var(--ease-spring) backwards;
+}
+
+.stepCurrent .stepDot {
+  animation: blink 1s ease-in-out infinite;
+}
+
+.textSwap {
+  animation: fade-up var(--duration-slow) var(--ease-out) backwards;
+}
+
+/* Timer bar along the bottom edge of the banner, melts away */
+.progress {
+  position: absolute;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  height: 3px;
+  background: rgb(255 255 255 / 0.05);
+}
+
+.progress > span {
+  display: block;
+  height: 100%;
+  background: var(--color-accent);
+  transform-origin: left;
+  transition: transform 1s linear;
+}
+
+.progressUrgent > span {
+  background: var(--color-danger);
 }
 
 .bannerMine {
@@ -58,9 +171,13 @@
 .bannerText {
   display: flex;
   flex-direction: column;
-  gap: var(--space-1);
   min-width: 0;
   flex: 1 1 320px;
+}
+
+.bannerText p {
+  font-size: var(--text-sm);
+  color: var(--color-text-secondary);
 }
 
 .bannerPhase {
@@ -72,7 +189,7 @@
 }
 
 .bannerTitle {
-  font-size: var(--text-lg);
+  font-size: var(--text-md);
 }
 
 .bannerSide {
@@ -85,15 +202,15 @@
 .clock {
   display: inline-flex;
   align-items: center;
-  gap: var(--space-2);
-  min-width: 96px;
   justify-content: center;
-  padding: var(--space-2) var(--space-3);
+  gap: var(--space-2);
+  min-width: 92px;
+  padding: var(--space-1) var(--space-3);
   background: var(--color-bg);
   border: 1px solid var(--color-border-strong);
   border-radius: var(--radius-md);
   font-family: var(--font-mono);
-  font-size: var(--text-xl);
+  font-size: var(--text-lg);
   font-weight: 700;
   font-variant-numeric: tabular-nums;
 }
@@ -101,127 +218,34 @@
 .clockUrgent {
   color: var(--color-danger);
   border-color: var(--color-danger-border);
-  animation: pulse 1s ease-in-out infinite;
+  animation: blink 1s ease-in-out infinite;
 }
 
-@keyframes pulse {
+@keyframes blink {
   50% {
     opacity: 0.6;
   }
 }
 
-/* ---- layout ---------------------------------------------------------- */
+/* ---- camera grid ----------------------------------------------------- */
 
-.layout {
-  display: grid;
-  grid-template-columns: minmax(0, 1fr) 380px;
-  gap: var(--space-4);
-  align-items: start;
+.stage {
+  flex: 1;
+  min-height: 0;
+  overflow-y: auto;
+  /* Room for the media dock in the bottom-right corner (excluded from the fit) */
+  padding-bottom: 68px;
 }
 
-.main,
-.side {
+.grid {
   display: flex;
-  flex-direction: column;
-  gap: var(--space-4);
-  min-width: 0;
-}
-
-.board {
-  display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(min(100%, 280px), 1fr));
-  gap: var(--space-3);
-}
-
-/* ---- player tile ----------------------------------------------------- */
-
-.tile {
-  display: flex;
-  flex-direction: column;
-  gap: var(--space-3);
-  padding: var(--space-3);
-  background: var(--color-surface);
-  border: 1px solid var(--color-border);
-  border-radius: var(--radius-lg);
-  transition:
-    border-color var(--duration) var(--ease),
-    opacity var(--duration) var(--ease);
-}
-
-.tileMe {
-  border-color: var(--color-border-strong);
-}
-
-.tileSpeaking {
-  border-color: var(--color-accent);
-  box-shadow: 0 0 0 1px var(--color-accent), var(--shadow-accent);
-}
-
-.tileVoted {
-  border-color: var(--color-danger-border);
-}
-
-.tileOut {
-  opacity: 0.6;
-}
-
-.tileHeader {
-  display: flex;
-  flex-direction: column;
-  gap: var(--space-2);
-}
-
-.tileName {
-  display: flex;
-  align-items: center;
-  gap: var(--space-2);
-  min-width: 0;
-  overflow-wrap: anywhere;
-}
-
-.tileBadges {
-  display: flex;
-  gap: var(--space-1);
   flex-wrap: wrap;
+  justify-content: center;
+  align-content: center;
+  min-height: 100%;
 }
 
-.tileBadges:empty {
-  display: none;
-}
-
-.hostIcon {
-  color: var(--color-accent);
-}
-
-.tileFooter {
-  display: flex;
-  gap: var(--space-2);
-  flex-wrap: wrap;
-  margin-top: auto;
-}
-
-.iconButton {
-  display: grid;
-  place-items: center;
-  width: 24px;
-  height: 24px;
-  background: transparent;
-  border: 1px solid var(--color-border);
-  border-radius: var(--radius-sm);
-  color: var(--color-text-secondary);
-}
-
-.iconButton:hover:not(:disabled) {
-  color: var(--color-accent);
-  border-color: var(--color-accent-border);
-}
-
-/* ---- my card --------------------------------------------------------- */
-
-.myCardActive {
-  border-color: var(--color-accent-border);
-  box-shadow: var(--shadow-accent);
-}
+/* ---- drawers' contents ---------------------------------------------- */
 
 .revealButton {
   display: inline-flex;
@@ -246,26 +270,46 @@
   cursor: not-allowed;
 }
 
-/* ---- moderator ------------------------------------------------------- */
+.iconButton {
+  display: grid;
+  place-items: center;
+  width: 26px;
+  height: 26px;
+  background: transparent;
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-sm);
+  color: var(--color-text-secondary);
+}
 
-.moderator {
+.iconButton:hover:not(:disabled) {
+  color: var(--color-accent);
   border-color: var(--color-accent-border);
+}
+
+.manageActions {
+  display: flex;
+  gap: var(--space-2);
+  flex-wrap: wrap;
+}
+
+/* moderator console */
+.console {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-4);
 }
 
 .modRow {
   display: flex;
-  align-items: flex-end;
-  gap: var(--space-3);
-  flex-wrap: wrap;
+  flex-direction: column;
+  gap: var(--space-2);
 }
 
 .modTimer {
-  flex: 0 1 200px;
+  width: 100%;
 }
 
 .modLabel {
-  flex: 0 0 96px;
-  align-self: center;
   font-family: var(--font-display);
   font-size: var(--text-xs);
   letter-spacing: var(--tracking-wide);
@@ -286,9 +330,8 @@
 
 .swap {
   display: grid;
-  grid-template-columns: repeat(3, minmax(0, 1fr)) auto;
+  grid-template-columns: 1fr 1fr;
   gap: var(--space-2);
-  flex: 1 1 420px;
 }
 
 .swap select {
@@ -298,16 +341,14 @@
 
 .modFooter {
   display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: var(--space-3);
-  flex-wrap: wrap;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: var(--space-2);
   padding-top: var(--space-3);
   border-top: 1px solid var(--color-border);
 }
 
-/* ---- scenario -------------------------------------------------------- */
-
+/* scenario */
 .scenario {
   display: flex;
   flex-direction: column;
@@ -323,6 +364,7 @@
   display: flex;
   align-items: center;
   gap: var(--space-2);
+  font-size: var(--text-lg);
   color: var(--color-accent);
 }
 
@@ -346,14 +388,11 @@
   color: var(--color-accent);
 }
 
-/* ---- log ------------------------------------------------------------- */
-
+/* log */
 .log {
   display: flex;
   flex-direction: column;
   gap: var(--space-1);
-  max-height: 320px;
-  overflow-y: auto;
   font-size: var(--text-sm);
 }
 
@@ -385,14 +424,71 @@
 
 /* ---- final ----------------------------------------------------------- */
 
+.finalBackdrop {
+  position: fixed;
+  inset: 0;
+  z-index: 50;
+  display: grid;
+  place-items: center;
+  padding: var(--page-gutter);
+  background: var(--color-overlay);
+  backdrop-filter: blur(4px);
+}
+
 .final {
+  position: relative;
+  display: flex;
+  flex-direction: column;
   align-items: center;
+  gap: var(--space-4);
+  width: min(640px, 100%);
+  padding: var(--space-8) var(--space-6);
   text-align: center;
-  padding: var(--space-8) var(--space-5);
+  background: var(--color-surface);
+  border: 1px solid var(--color-border-strong);
+  border-radius: var(--radius-lg);
+  box-shadow: 0 30px 80px rgb(0 0 0 / 0.7);
+}
+
+.final::before {
+  content: "";
+  position: absolute;
+  inset: -1px -1px auto;
+  height: 5px;
+  background: var(--hazard-stripes);
+  border-radius: var(--radius-lg) var(--radius-lg) 0 0;
 }
 
 .finalIcon {
   color: var(--color-accent);
+}
+
+.final {
+  z-index: 1;
+  border-color: var(--color-accent-border);
+  box-shadow:
+    0 30px 80px rgb(0 0 0 / 0.7),
+    0 0 60px -10px var(--color-accent);
+  animation: scale-in 500ms var(--ease-spring) backwards;
+}
+
+.finalTitle {
+  color: var(--color-accent);
+  text-shadow: 0 0 24px var(--color-accent-soft);
+}
+
+.final_lost {
+  background: rgb(40 4 2 / 0.72);
+}
+
+/* Soft tinted vignette instead of effects: the colour tells the outcome */
+.final_lost,
+.final_won {
+  box-shadow: inset 0 0 180px 30px var(--color-accent-soft);
+}
+
+.final_won {
+  background: rgb(2 30 12 / 0.7);
 }
 
 .finalTitle {
@@ -404,7 +500,6 @@
   grid-template-columns: 1fr 1fr;
   gap: var(--space-6);
   width: 100%;
-  max-width: 640px;
 }
 
 .finalLists h3 {
@@ -412,29 +507,236 @@
   color: var(--color-text-secondary);
 }
 
+.finalActions {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: var(--space-3);
+  flex-wrap: wrap;
+}
+
 /* ---- responsive ------------------------------------------------------ */
 
-@media (max-width: 1080px) {
-  .layout {
-    grid-template-columns: 1fr;
-  }
-
-  /* On narrow screens the own card goes right under the banner. */
-  .side {
-    order: -1;
+@media (max-width: 900px) {
+  .label {
+    display: none;
   }
 }
 
 @media (max-width: 560px) {
-  .banner {
-    padding: var(--space-3);
+  .screen {
+    padding: var(--space-2);
+    gap: var(--space-2);
   }
 
-  .swap {
-    grid-template-columns: 1fr 1fr;
+  .divider {
+    display: none;
   }
 
   .finalLists {
     grid-template-columns: 1fr;
+  }
+}
+
+/* ---- action card (my card drawer) ------------------------------------ */
+
+.actionCard {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-3);
+  padding: var(--space-4);
+  background: color-mix(in srgb, var(--trait-action) 8%, var(--color-bg-elevated));
+  border: 1px solid color-mix(in srgb, var(--trait-action) 40%, transparent);
+  border-radius: var(--radius-md);
+}
+
+.actionHeader {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+  font-family: var(--font-display);
+  font-size: var(--text-lg);
+  letter-spacing: 0.03em;
+  text-transform: uppercase;
+}
+
+.actionHeader svg {
+  color: var(--trait-action);
+}
+
+.actionForm {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
+  gap: var(--space-3);
+}
+
+.actionStatus {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+  font-size: var(--text-sm);
+  color: var(--color-text-muted);
+}
+
+.secrets {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2);
+  padding: var(--space-3) var(--space-4);
+  border: 1px dashed var(--color-border-strong);
+  border-radius: var(--radius-md);
+  font-size: var(--text-sm);
+}
+
+.secrets h3 {
+  font-size: var(--text-sm);
+  color: var(--color-text-secondary);
+}
+
+.bannerExtra {
+  margin-top: var(--space-1);
+  color: var(--color-accent) !important;
+}
+
+/* ---- moderator: pending cards ---------------------------------------- */
+
+.pendingList {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2);
+}
+
+.pendingItem {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2);
+  padding: var(--space-3);
+  background: var(--color-accent-soft);
+  border: 1px solid var(--color-accent-border);
+  border-radius: var(--radius-md);
+  font-size: var(--text-sm);
+}
+
+.pendingButtons {
+  display: flex;
+  gap: var(--space-2);
+}
+
+.countBadge {
+  display: inline-grid;
+  place-items: center;
+  min-width: 18px;
+  height: 18px;
+  padding: 0 4px;
+  border-radius: var(--radius-full);
+  background: var(--color-danger);
+  color: var(--color-text-inverse);
+  font-family: var(--font-body);
+  font-size: 11px;
+  font-weight: 700;
+}
+
+/* ---- help ------------------------------------------------------------ */
+
+.help {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-5);
+  font-size: var(--text-sm);
+}
+
+.help section {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2);
+  animation: fade-up var(--duration-slow) var(--ease-out) backwards;
+}
+
+.help section:nth-child(2) { animation-delay: 60ms; }
+.help section:nth-child(3) { animation-delay: 120ms; }
+.help section:nth-child(4) { animation-delay: 180ms; }
+.help section:nth-child(5) { animation-delay: 240ms; }
+
+.help h3 {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+  color: var(--color-accent);
+}
+
+.helpSteps {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2);
+  padding-left: var(--space-5);
+  list-style: decimal;
+}
+
+.helpSteps li::marker {
+  color: var(--color-accent);
+  font-family: var(--font-display);
+}
+
+.helpLegend,
+.helpKeys {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2);
+}
+
+.helpLegend li {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+  flex-wrap: wrap;
+}
+
+.helpBadge {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  padding: 2px 8px;
+  border-radius: var(--radius-full);
+  border: 1px solid var(--color-border-strong);
+  background: var(--color-bg);
+  font-size: var(--text-xs);
+}
+
+.helpKeys {
+  flex-direction: row;
+  flex-wrap: wrap;
+  gap: var(--space-4);
+}
+
+.helpKeys kbd {
+  display: inline-grid;
+  place-items: center;
+  min-width: 26px;
+  height: 26px;
+  margin-right: var(--space-1);
+  padding: 0 6px;
+  border: 1px solid var(--color-border-strong);
+  border-bottom-width: 3px;
+  border-radius: var(--radius-sm);
+  background: var(--color-surface-3);
+  font-family: var(--font-mono);
+  font-size: var(--text-xs);
+}
+
+.inlineIcon {
+  display: inline;
+  vertical-align: -2px;
+}
+
+/* "?" pulses until the player opens the help once */
+.attention {
+  animation: attention 2s ease-in-out infinite;
+}
+
+@keyframes attention {
+  50% {
+    box-shadow: 0 0 0 4px var(--color-info-soft);
+    border-color: var(--color-info-border);
+    color: var(--color-info);
   }
 }

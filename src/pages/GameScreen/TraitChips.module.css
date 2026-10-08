@@ -1,0 +1,111 @@
+/* Sizes scale with the tile (container query units on .tile). */
+/* A column of chips in a bottom corner of the tile. */
+.chips {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: clamp(2px, 0.6cqi, 5px);
+  min-width: 0;
+}
+
+.end {
+  align-items: flex-end;
+}
+
+.chip {
+  display: inline-flex;
+  align-items: center;
+  gap: clamp(2px, 0.8cqi, 5px);
+  max-width: 100%;
+  min-width: 0;
+  padding: clamp(1px, 0.5cqi, 3px) clamp(4px, 1.4cqi, 8px);
+  border: 1px solid transparent;
+  border-radius: var(--radius-sm);
+  font-size: clamp(10px, 2.6cqi, 14px);
+  line-height: 1.35;
+  backdrop-filter: blur(6px);
+  -webkit-backdrop-filter: blur(6px);
+  transition:
+    background-color var(--duration-slow) var(--ease),
+    border-color var(--duration-slow) var(--ease),
+    color var(--duration-slow) var(--ease);
+}
+
+.icon {
+  width: 1.1em;
+  height: 1.1em;
+  flex-shrink: 0;
+}
+
+.text {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+/* Revealed: solid color tint, readable value */
+.revealed {
+  --flash-color: var(--trait);
+  animation: flash 700ms var(--ease-out);
+  background: color-mix(in srgb, var(--trait) 28%, rgb(10 10 8 / 0.78));
+  border-color: color-mix(in srgb, var(--trait) 65%, transparent);
+  color: var(--color-text);
+}
+
+.revealed .icon {
+  color: var(--trait);
+}
+
+/* Known only to the viewer (moderator): dashed, dimmer */
+.secret {
+  background: rgb(10 10 8 / 0.7);
+  border: 1px dashed color-mix(in srgb, var(--trait) 55%, transparent);
+  color: var(--color-text-secondary);
+  font-style: italic;
+}
+
+.secret .icon {
+  color: var(--trait);
+  opacity: 0.7;
+}
+
+/* Unknown: just the category name */
+.unknown {
+  background: rgb(10 10 8 / 0.55);
+  border-color: rgb(255 255 255 / 0.08);
+  color: var(--color-text-muted);
+}
+
+.unknown .icon {
+  color: color-mix(in srgb, var(--trait) 45%, var(--color-text-muted));
+}
+
+/* ---- tooltip affordance -------------------------------------------- */
+
+.hoverable {
+  cursor: help;
+  transition: transform var(--duration-fast) var(--ease);
+}
+
+.hoverable:hover,
+.hoverable:focus-visible {
+  transform: translateY(-1px);
+}
+
+.info {
+  width: 0.95em;
+  height: 0.95em;
+  flex-shrink: 0;
+  opacity: 0.7;
+}
+
+.tipNote {
+  display: block;
+  color: var(--color-text-muted);
+  font-size: var(--text-xs);
+}
+
+.tipText {
+  margin-top: var(--space-1);
+  color: var(--color-text-secondary);
+}

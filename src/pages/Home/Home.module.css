@@ -16,6 +16,13 @@
 .logoIcon {
   color: var(--color-accent);
   filter: drop-shadow(0 0 12px rgb(232 163 61 / 0.5));
+  animation: radiate 6s linear infinite;
+}
+
+@keyframes radiate {
+  to {
+    transform: rotate(360deg);
+  }
 }
 
 .logo {
@@ -180,8 +187,17 @@
   transition: border-color var(--duration) var(--ease);
 }
 
+.room {
+  transition:
+    border-color var(--duration) var(--ease),
+    transform var(--duration) var(--ease-out),
+    background-color var(--duration) var(--ease);
+}
+
 .room:hover {
-  border-color: var(--color-border-strong);
+  border-color: var(--color-accent-border);
+  background: var(--color-surface-2);
+  transform: translateX(4px);
 }
 
 .roomInfo {

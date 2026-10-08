@@ -1,5 +1,5 @@
 import { observer } from "mobx-react-lite";
-import { useState } from "react";
+import { useState, type CSSProperties } from "react";
 import { useNavigate } from "react-router-dom";
 import {
   Check,
@@ -22,7 +22,6 @@ import { SettingsForm } from "../../components/SettingsForm";
 import { Alert, Badge, Button, Page, Panel, cx } from "../../components/ui";
 import { useAction } from "../../hooks/useAction";
 import { roomStore } from "../../store/roomStore";
-import { MediaControls } from "../../voice/MediaControls";
 import { VideoStrip } from "../../voice/VideoStrip";
 import styles from "./Lobby.module.css";
 
@@ -83,7 +82,6 @@ export const Lobby = observer(({ view }: { view: RoomView }) => {
           </div>
         </div>
         <div className={styles.headerActions}>
-          <MediaControls />
           <Button variant="danger" size="sm" icon={<LogOut size={14} />} onClick={leave}>
             Выйти
           </Button>
@@ -97,9 +95,10 @@ export const Lobby = observer(({ view }: { view: RoomView }) => {
       <div className={styles.grid}>
         <Panel title={`Игроки ${players.length}/${settings.maxPlayers}`} icon={<Users size={18} />}>
           <ul className={styles.players}>
-            {view.players.map((player) => (
+            {view.players.map((player, i) => (
               <PlayerRow
                 key={player.id}
+                index={i}
                 player={player}
                 isMe={player.id === me?.id}
                 canManage={isHost && player.id !== me?.id}
@@ -156,6 +155,7 @@ export const Lobby = observer(({ view }: { view: RoomView }) => {
 
 interface PlayerRowProps {
   player: PublicPlayer;
+  index: number;
   isMe: boolean;
   canManage: boolean;
   canMakeModerator: boolean;
@@ -163,8 +163,8 @@ interface PlayerRowProps {
   onAction: (action: () => Promise<unknown>) => void;
 }
 
-const PlayerRow = ({ player, isMe, canManage, canMakeModerator, disabled, onAction }: PlayerRowProps) => (
-  <li className={cx(styles.player, !player.isOnline && styles.offline)}>
+const PlayerRow = ({ player, index, isMe, canManage, canMakeModerator, disabled, onAction }: PlayerRowProps) => (
+  <li className={cx(styles.player, "enter", !player.isOnline && styles.offline)} style={{ "--i": index } as CSSProperties}>
     <div className={styles.playerName}>
       {player.isHost && <Crown size={16} className={styles.hostIcon} aria-label="Хост" />}
       <span className={styles.name}>{player.name}</span>

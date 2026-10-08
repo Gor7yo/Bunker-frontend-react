@@ -3,19 +3,14 @@ import { useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { ArrowLeft, Plus } from "lucide-react";
 
-import { DEFAULT_SETTINGS, NAME_MAX_LENGTH, type RoomSettings, type SettingsPatch } from "../../api/types";
+import { applySettingsPatch } from "../../api/settings";
+import { DEFAULT_SETTINGS, NAME_MAX_LENGTH } from "../../api/types";
 import { SettingsForm } from "../../components/SettingsForm";
 import { Alert, Button, Field, Input, Page, Panel } from "../../components/ui";
 import { useAction } from "../../hooks/useAction";
 import { roomStore } from "../../store/roomStore";
 import { loadName, saveName } from "../../store/storage";
 import styles from "./CreateRoom.module.css";
-
-const applyPatch = (base: RoomSettings, patch: SettingsPatch): RoomSettings => ({
-  ...base,
-  ...patch,
-  timers: { ...base.timers, ...patch.timers },
-});
 
 export const CreateRoom = observer(() => {
   const navigate = useNavigate();
@@ -61,7 +56,7 @@ export const CreateRoom = observer(() => {
           <SettingsForm
             value={settings}
             titlePlaceholder={`Комната ${name.trim() || "игрока"}`}
-            onChange={(patch) => setSettings((s) => applyPatch(s, patch))}
+            onChange={(patch) => setSettings((s) => applySettingsPatch(s, patch))}
           />
 
           {error && <Alert onClose={() => setError(null)}>{error}</Alert>}

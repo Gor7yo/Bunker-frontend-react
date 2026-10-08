@@ -14,11 +14,25 @@
     background-color var(--duration) var(--ease),
     border-color var(--duration) var(--ease),
     color var(--duration) var(--ease),
-    transform var(--duration-fast) var(--ease);
+    box-shadow var(--duration) var(--ease),
+    transform var(--duration-fast) var(--ease-out);
+}
+
+.button:hover:not(:disabled) {
+  transform: translateY(-1px);
 }
 
 .button:active:not(:disabled) {
-  transform: translateY(1px);
+  transform: translateY(1px) scale(0.97);
+  transition-duration: 60ms;
+}
+
+.button svg {
+  transition: transform var(--duration) var(--ease-spring);
+}
+
+.button:hover:not(:disabled) svg {
+  transform: scale(1.12);
 }
 
 .button:disabled {

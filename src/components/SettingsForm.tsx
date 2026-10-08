@@ -1,8 +1,10 @@
 import { useState } from "react";
-import { Bot, Gavel } from "lucide-react";
+import { Bot, Gavel, Zap } from "lucide-react";
 
 import {
   TITLE_MAX_LENGTH,
+  type ActionApproval,
+  type ActionTiming,
   type GameMode,
   type RoomSettings,
   type RoomTimers,
@@ -121,6 +123,34 @@ export const SettingsForm = ({ value, onChange, disabled, titlePlaceholder }: Se
         ))}
       </div>
     )}
+
+    <fieldset className={styles.section}>
+      <legend className={styles.legend}>
+        <Zap size={14} /> Карты действий
+      </legend>
+      <Field label="Когда можно играть">
+        <Select
+          disabled={disabled}
+          value={value.actions.timing}
+          onChange={(e) => onChange({ actions: { timing: e.target.value as ActionTiming } })}
+        >
+          <option value="ANYTIME">В любой момент игры</option>
+          <option value="OWN_TURN">Только в свой ход</option>
+        </Select>
+      </Field>
+      {value.mode === "MODERATED" && (
+        <Field label="Применение">
+          <Select
+            disabled={disabled}
+            value={value.actions.approval}
+            onChange={(e) => onChange({ actions: { approval: e.target.value as ActionApproval } })}
+          >
+            <option value="AUTO">Срабатывают сразу</option>
+            <option value="MODERATOR">Ведущий одобряет каждую карту</option>
+          </Select>
+        </Field>
+      )}
+    </fieldset>
   </div>
 );
 

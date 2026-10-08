@@ -1,5 +1,5 @@
 import { observer } from "mobx-react-lite";
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useRef, useState, type CSSProperties } from "react";
 import { useNavigate, useSearchParams } from "react-router-dom";
 import { Bot, DoorOpen, Gavel, Plus, Radiation, Search, Undo2, Users, X } from "lucide-react";
 
@@ -232,8 +232,8 @@ const PublicRooms = ({ filters, onFiltersChange, disabled, onJoin }: PublicRooms
         </div>
       ) : (
         <ul className={cx(styles.roomList, loading && styles.stale)}>
-          {rooms.map((room) => (
-            <PublicRoomRow key={room.code} room={room} disabled={disabled} onJoin={onJoin} />
+          {rooms.map((room, i) => (
+            <PublicRoomRow key={room.code} index={i} room={room} disabled={disabled} onJoin={onJoin} />
           ))}
         </ul>
       )}
@@ -280,17 +280,19 @@ const SearchInput = ({ value, onChange }: { value: string; onChange: (value: str
 
 const PublicRoomRow = ({
   room,
+  index,
   disabled,
   onJoin,
 }: {
   room: PublicRoomSummary;
+  index: number;
   disabled: boolean;
   onJoin: (code: string) => void;
 }) => {
   const isFull = room.players >= room.maxPlayers;
 
   return (
-    <li className={styles.room}>
+    <li className={cx(styles.room, "enter")} style={{ "--i": index } as CSSProperties}>
       <div className={styles.roomInfo}>
         <strong className={styles.roomTitle}>{room.title}</strong>
         <div className={styles.roomMeta}>

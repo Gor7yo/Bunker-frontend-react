@@ -40,7 +40,18 @@
   --color-info-soft: rgb(127 176 200 / 0.14);
   --color-info-border: rgb(127 176 200 / 0.4);
 
-  /* Typography */
+  /* Characteristic colors (chips on player cameras) */
+  --trait-gender: #f0abfc;
+  --trait-age: #7fb0c8;
+  --trait-profession: #e8a33d;
+  --trait-health: #9cc35a;
+  --trait-phobia: #a78bfa;
+  --trait-hobby: #f472b6;
+  --trait-baggage: #d6a46c;
+  --trait-fact: #5eead4;
+  --trait-action: #f87171;
+
+    /* Typography */
   --font-body: "Inter", system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
   --font-display: "Oswald", "Arial Narrow", sans-serif;
   --font-mono: "JetBrains Mono", ui-monospace, Consolas, monospace;
@@ -99,6 +110,65 @@
 }
 
 /* ==========================================================================
+   Outcome themes: the whole UI turns red (left outside) or green (made it
+   into the bunker) at the end of the game. Registered properties let the
+   accent colours transition smoothly.
+   ========================================================================== */
+
+@property --color-accent {
+  syntax: "<color>";
+  inherits: true;
+  initial-value: #e8a33d;
+}
+
+@property --color-accent-hover {
+  syntax: "<color>";
+  inherits: true;
+  initial-value: #f2b350;
+}
+
+@property --outcome-glow {
+  syntax: "<color>";
+  inherits: true;
+  initial-value: transparent;
+}
+
+:root {
+  --outcome-glow: transparent;
+  transition:
+    --color-accent 1.2s var(--ease),
+    --color-accent-hover 1.2s var(--ease),
+    --outcome-glow 1.2s var(--ease);
+}
+
+:root[data-outcome="lost"] {
+  --color-accent: #f0503a;
+  --color-accent-hover: #ff6a52;
+  --color-accent-soft: rgb(240 80 58 / 0.16);
+  --color-accent-border: rgb(240 80 58 / 0.5);
+  --shadow-accent: 0 6px 20px -6px rgb(240 80 58 / 0.55);
+  --outcome-glow: rgb(240 80 58 / 0.18);
+}
+
+:root[data-outcome="won"] {
+  --color-accent: #4ade80;
+  --color-accent-hover: #6ee79a;
+  --color-accent-soft: rgb(74 222 128 / 0.14);
+  --color-accent-border: rgb(74 222 128 / 0.5);
+  --shadow-accent: 0 6px 20px -6px rgb(74 222 128 / 0.5);
+  --outcome-glow: rgb(74 222 128 / 0.14);
+}
+
+/* Hazard stripes follow the accent colour */
+:root[data-outcome] {
+  --hazard-stripes: repeating-linear-gradient(
+    -45deg,
+    var(--color-accent) 0 10px,
+    var(--color-bg) 10px 20px
+  );
+}
+
+/* ==========================================================================
    Reset
    ========================================================================== */
 
@@ -123,10 +193,12 @@ body {
   color: var(--color-text);
   background-color: var(--color-bg);
   background-image:
+    radial-gradient(ellipse 90% 70% at 50% 110%, var(--outcome-glow), transparent 70%),
     radial-gradient(ellipse 80% 50% at 50% -10%, rgb(232 163 61 / 0.08), transparent 70%),
     linear-gradient(rgb(255 255 255 / 0.015) 1px, transparent 1px),
     linear-gradient(90deg, rgb(255 255 255 / 0.015) 1px, transparent 1px);
   background-size:
+    100% 100%,
     100% 100%,
     32px 32px,
     32px 32px;
@@ -250,11 +322,94 @@ a:hover {
   font-family: var(--font-mono);
 }
 
+/* ==========================================================================
+   Motion. Use the utility classes or the keyframes directly; stagger lists
+   with style={{ "--i": index }}.
+   ========================================================================== */
+
+:root {
+  --duration-slow: 400ms;
+  --ease-out: cubic-bezier(0.16, 1, 0.3, 1);
+  --ease-spring: cubic-bezier(0.34, 1.56, 0.64, 1);
+  --stagger: 45ms;
+}
+
+@keyframes fade-in {
+  from {
+    opacity: 0;
+  }
+}
+
+@keyframes fade-up {
+  from {
+    opacity: 0;
+    transform: translateY(10px);
+  }
+}
+
+@keyframes scale-in {
+  from {
+    opacity: 0;
+    transform: scale(0.94);
+  }
+}
+
+@keyframes pop-in {
+  0% {
+    opacity: 0;
+    transform: scale(0.6);
+  }
+  70% {
+    opacity: 1;
+    transform: scale(1.08);
+  }
+  100% {
+    transform: scale(1);
+  }
+}
+
+@keyframes flash {
+  0% {
+    box-shadow: 0 0 0 0 var(--flash-color, var(--color-accent));
+    filter: brightness(1.6);
+  }
+  100% {
+    box-shadow: 0 0 0 10px transparent;
+    filter: brightness(1);
+  }
+}
+
+@keyframes shake {
+  20%,
+  60% {
+    transform: translateX(-4px);
+  }
+  40%,
+  80% {
+    transform: translateX(4px);
+  }
+}
+
+.enter {
+  animation: fade-up var(--duration-slow) var(--ease-out) backwards;
+  animation-delay: calc(var(--i, 0) * var(--stagger));
+}
+
+.enter-scale {
+  animation: scale-in var(--duration-slow) var(--ease-out) backwards;
+  animation-delay: calc(var(--i, 0) * var(--stagger));
+}
+
+.pop {
+  animation: pop-in 320ms var(--ease-spring) backwards;
+}
+
 @media (prefers-reduced-motion: reduce) {
   *,
   *::before,
   *::after {
     animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
     transition-duration: 0.01ms !important;
   }
 }

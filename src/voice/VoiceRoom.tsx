@@ -5,6 +5,7 @@ import { VideoPresets, type RoomOptions } from "livekit-client";
 
 import { request } from "../api/socket";
 import { roomStore } from "../store/roomStore";
+import { MediaDock } from "./MediaDock";
 import { VoiceContext } from "./voiceContext";
 
 /**
@@ -51,7 +52,12 @@ export const VoiceRoom = observer(({ code, children }: { code: string; children:
 
   if (!credentials || credentials.code !== code || "error" in credentials) {
     const error = credentials && "error" in credentials ? credentials.error : null;
-    return <VoiceContext.Provider value={{ enabled: false, error }}>{children}</VoiceContext.Provider>;
+    return (
+      <VoiceContext.Provider value={{ enabled: false, error }}>
+        {children}
+        <MediaDock />
+      </VoiceContext.Provider>
+    );
   }
 
   return (
@@ -68,6 +74,7 @@ export const VoiceRoom = observer(({ code, children }: { code: string; children:
       <VoiceContext.Provider value={{ enabled: true, error: null }}>
         <RoomAudioRenderer />
         {children}
+        <MediaDock />
       </VoiceContext.Provider>
     </LiveKitRoom>
   );

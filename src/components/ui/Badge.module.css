@@ -9,6 +9,7 @@
   font-weight: 500;
   line-height: 1.5;
   white-space: nowrap;
+  animation: pop-in 280ms var(--ease-spring) backwards;
 }
 
 .neutral {

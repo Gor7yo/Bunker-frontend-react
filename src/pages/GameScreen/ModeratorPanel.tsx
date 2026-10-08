@@ -1,9 +1,9 @@
 import { observer } from "mobx-react-lite";
 import { useState } from "react";
-import { ArrowLeftRight, Flag, Gavel, Play, Square, Vote } from "lucide-react";
+import { ArrowLeftRight, Flag, Play, Square, Vote } from "lucide-react";
 
 import { CARD_KEYS, CARD_LABELS, type CardKey, type GamePhase, type GameView, type RoomView } from "../../api/types";
-import { Button, Field, Panel, Select, cx } from "../../components/ui";
+import { Button, Field, Select, cx } from "../../components/ui";
 import { PHASE_LABELS, useGameActions } from "./gameActions";
 import styles from "./GameScreen.module.css";
 
@@ -25,6 +25,7 @@ interface Props {
   onSecondsChange: (seconds: number | null) => void;
 }
 
+/** Contents of the moderator console drawer. */
 export const ModeratorPanel = observer(({ view, game, seconds, onSecondsChange }: Props) => {
   const { act, pending } = useGameActions();
   const alive = view.players.filter((p) => p.role === "PLAYER" && p.isAlive && !p.hasLeft);
@@ -32,7 +33,9 @@ export const ModeratorPanel = observer(({ view, game, seconds, onSecondsChange }
   const enoughExiled = game.aliveCount <= game.seats;
 
   return (
-    <Panel title="Пульт ведущего" icon={<Gavel size={18} />} className={styles.moderator}>
+    <div className={styles.console}>
+      {game.pendingActions.length > 0 && <PendingActions view={view} game={game} />}
+
       <div className={styles.modRow}>
         <Field label="Таймер для фаз и слова" className={styles.modTimer}>
           <Select
@@ -117,9 +120,44 @@ export const ModeratorPanel = observer(({ view, game, seconds, onSecondsChange }
           Завершить игру
         </Button>
       </div>
-    </Panel>
+    </div>
   );
 });
+
+/** Action cards waiting for the moderator's decision. */
+const PendingActions = ({ view, game }: { view: RoomView; game: GameView }) => {
+  const { act, pending } = useGameActions();
+  const nameOf = (id?: string) => view.players.find((p) => p.id === id)?.name;
+
+  return (
+    <div className={styles.modRow}>
+      <span className={styles.modLabel}>Карты на одобрении</span>
+      <ul className={styles.pendingList}>
+        {game.pendingActions.map((a) => {
+          const targets = [nameOf(a.params.targetId), nameOf(a.params.otherId)].filter(Boolean).join(" и ");
+          return (
+            <li key={a.id} className={styles.pendingItem}>
+              <span>
+                <strong>{nameOf(a.playerId)}</strong> играет «{a.value}»
+                {targets && <> → {targets}</>}
+                {a.params.key && <> ({CARD_LABELS[a.params.key].toLowerCase()})</>}
+              </span>
+              {a.description && <span className="text-secondary">{a.description}</span>}
+              <div className={styles.pendingButtons}>
+                <Button size="sm" variant="success" disabled={pending} onClick={() => act("mod:approveAction", { id: a.id })}>
+                  Одобрить
+                </Button>
+                <Button size="sm" variant="danger" disabled={pending} onClick={() => act("mod:rejectAction", { id: a.id })}>
+                  Отклонить
+                </Button>
+              </div>
+            </li>
+          );
+        })}
+      </ul>
+    </div>
+  );
+};
 
 const SwapForm = ({ view }: { view: RoomView }) => {
   const { act, pending } = useGameActions();

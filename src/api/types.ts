@@ -1,8 +1,9 @@
 // Mirrors the server contracts (bunker-server-nesjs/src/modules/room/room.types.ts).
 
 export const CARD_KEYS = [
-  "profession",
+  "gender",
   "age",
+  "profession",
   "health",
   "phobia",
   "hobby",
@@ -16,8 +17,9 @@ export type CardKey = (typeof CARD_KEYS)[number];
 export type PlayerCard = Record<CardKey, string>;
 
 export const CARD_LABELS: Record<CardKey, string> = {
-  profession: "Профессия",
+  gender: "Пол",
   age: "Возраст",
+  profession: "Профессия",
   health: "Здоровье",
   phobia: "Фобия",
   hobby: "Хобби",
@@ -37,12 +39,21 @@ export interface RoomTimers {
   defense: number;
 }
 
+export type ActionTiming = "ANYTIME" | "OWN_TURN";
+export type ActionApproval = "AUTO" | "MODERATOR";
+
+export interface ActionRules {
+  timing: ActionTiming;
+  approval: ActionApproval;
+}
+
 export interface RoomSettings {
   title: string;
   isPublic: boolean;
   mode: GameMode;
   maxPlayers: number;
   timers: RoomTimers;
+  actions: ActionRules;
 }
 
 export const DEFAULT_SETTINGS: RoomSettings = {
@@ -51,6 +62,7 @@ export const DEFAULT_SETTINGS: RoomSettings = {
   mode: "AUTO",
   maxPlayers: 12,
   timers: { reveal: 60, discussion: 180, voting: 30, defense: 45 },
+  actions: { timing: "ANYTIME", approval: "AUTO" },
 };
 
 export const TITLE_MAX_LENGTH = 40;
@@ -65,8 +77,9 @@ export interface PublicRoomSummary {
   maxPlayers: number;
 }
 
-export type SettingsPatch = Partial<Omit<RoomSettings, "timers">> & {
+export type SettingsPatch = Partial<Omit<RoomSettings, "timers" | "actions">> & {
   timers?: Partial<RoomTimers>;
+  actions?: Partial<ActionRules>;
 };
 
 export interface PublicPlayer {
@@ -79,6 +92,8 @@ export interface PublicPlayer {
   isAlive: boolean;
   hasLeft: boolean;
   revealed: Partial<PlayerCard>;
+  /** Hidden values the viewer saw privately (Проверка досье, Тайное знание). */
+  known?: Partial<PlayerCard>;
   card?: PlayerCard;
 }
 
@@ -90,6 +105,8 @@ export interface RoomView {
   myCard: PlayerCard | null;
   myRevealed: CardKey[];
   players: PublicPlayer[];
+  /** Card value → description, for tooltips. */
+  hints: Record<string, string>;
   game: GameView | null;
 }
 
@@ -161,4 +178,34 @@ export interface GameView {
   requiredKey: CardKey | null;
   aliveCount: number;
   log: GameLogEntry[];
+  myAction: MyAction | null;
+  silenced: string[];
+  immune: string[];
+  confession: { targetId: string; byId: string } | null;
+  pendingActions: PendingAction[];
+}
+
+export interface MyAction {
+  value: string;
+  description: string | null;
+  target: "none" | "player" | "playerKey" | "twoPlayers" | "exiled";
+  keys: CardKey[];
+  allowSelf: boolean;
+  used: boolean;
+  pending: boolean;
+  blockedReason: string | null;
+}
+
+export interface ActionParams {
+  targetId?: string;
+  otherId?: string;
+  key?: CardKey;
+}
+
+export interface PendingAction {
+  id: string;
+  playerId: string;
+  params: ActionParams;
+  value: string;
+  description: string | null;
 }

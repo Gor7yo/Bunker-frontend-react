@@ -1,0 +1,121 @@
+/* Played once; everything stays in its final state (forwards). */
+
+.scene {
+  width: min(190px, 46vw);
+  height: auto;
+  /* The rolled-away door lives to the right of the frame */
+  overflow: visible;
+  color: var(--color-accent);
+}
+
+.wheel {
+  transform-box: fill-box;
+  transform-origin: center;
+}
+
+.lamp {
+  fill: #3a3b31;
+}
+
+/* ==== close: left outside ============================================= */
+
+.close .door {
+  animation: door-shut 1.1s cubic-bezier(0.55, 0, 0.75, 0.3) forwards;
+}
+
+.close .wheel {
+  animation: wheel-lock 0.9s var(--ease-out) 1.15s both;
+}
+
+
+.close .lamp {
+  animation: lamp-on 0.4s ease 2s forwards;
+}
+
+.close {
+  animation: impact 0.35s ease-out 1.05s;
+}
+
+@keyframes door-shut {
+  from {
+    transform: translateX(160px);
+  }
+  to {
+    transform: translateX(0);
+  }
+}
+
+@keyframes wheel-lock {
+  from {
+    transform: rotate(0deg);
+  }
+  to {
+    transform: rotate(-270deg);
+  }
+}
+
+
+/* The whole wall shakes when the door slams */
+@keyframes impact {
+  20% {
+    transform: translate(-5px, 2px);
+  }
+  45% {
+    transform: translate(4px, -2px);
+  }
+  70% {
+    transform: translate(-2px, 1px);
+  }
+}
+
+/* ==== open: made it into the bunker ================================== */
+
+.open .wheel {
+  animation: wheel-unlock 0.8s var(--ease-out) 0.2s both;
+}
+
+.open .lamp {
+  animation:
+    lamp-blink 0.2s steps(2) 0.2s 3,
+    lamp-on 0.3s ease 0.85s forwards;
+}
+
+.open .door {
+  animation: door-open 1.2s var(--ease-out) 1s both;
+}
+
+
+@keyframes wheel-unlock {
+  from {
+    transform: rotate(0deg);
+  }
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+@keyframes door-open {
+  from {
+    transform: translateX(0);
+  }
+  to {
+    transform: translateX(160px);
+  }
+}
+
+
+@keyframes lamp-blink {
+  from {
+    fill: #3a3b31;
+  }
+  to {
+    fill: var(--color-accent);
+  }
+}
+
+@keyframes lamp-on {
+  to {
+    fill: var(--color-accent);
+    filter: drop-shadow(0 0 6px var(--color-accent));
+  }
+}

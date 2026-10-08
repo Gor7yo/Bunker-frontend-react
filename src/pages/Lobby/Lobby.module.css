@@ -75,6 +75,16 @@
   border-radius: var(--radius-md);
 }
 
+.player {
+  transition:
+    border-color var(--duration) var(--ease),
+    opacity var(--duration) var(--ease);
+}
+
+.player:hover {
+  border-color: var(--color-border-strong);
+}
+
 .offline {
   opacity: 0.55;
 }
@@ -106,6 +116,21 @@
   position: sticky;
   bottom: var(--space-4);
   z-index: 1;
+}
+
+/* Keep clear of the media dock in the bottom-right corner:
+   beside it while there's room, above it on phones. */
+@media (max-width: 1600px) {
+  .footer {
+    margin-right: 220px;
+  }
+}
+
+@media (max-width: 760px) {
+  .footer {
+    margin-right: 0;
+    bottom: 76px;
+  }
 }
 
 @media (max-width: 760px) {

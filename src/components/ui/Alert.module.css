@@ -6,6 +6,7 @@
   border: 1px solid;
   border-radius: var(--radius-md);
   font-size: var(--text-sm);
+  animation: fade-up var(--duration) var(--ease-out) backwards;
 }
 
 .alert > svg {

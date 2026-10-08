@@ -1,30 +1,10 @@
 import type { ReactNode } from "react";
-import {
-  Activity,
-  Backpack,
-  BookOpen,
-  Briefcase,
-  Cake,
-  Ghost,
-  Target,
-  Zap,
-  type LucideIcon,
-} from "lucide-react";
+import { Info } from "lucide-react";
 
 import { CARD_KEYS, CARD_LABELS, type CardKey, type PlayerCard } from "../api/types";
-import { cx } from "./ui";
+import { TRAIT_ICONS, traitColor } from "./traits";
+import { cx, useTooltip } from "./ui";
 import styles from "./CardView.module.css";
-
-const CARD_ICONS: Record<CardKey, LucideIcon> = {
-  profession: Briefcase,
-  age: Cake,
-  health: Activity,
-  phobia: Ghost,
-  hobby: Target,
-  baggage: Backpack,
-  fact: BookOpen,
-  action: Zap,
-};
 
 interface CardViewProps {
   /** Known values: own card, moderator's view, or only revealed ones. */
@@ -38,6 +18,8 @@ interface CardViewProps {
   /** Highlight a row (e.g. the characteristic that must be revealed). */
   highlight?: CardKey | null;
   compact?: boolean;
+  /** Card value → description; shown in a tooltip on the value. */
+  hints?: Record<string, string>;
 }
 
 /**
@@ -51,13 +33,14 @@ export const CardView = ({
   action,
   highlight,
   compact,
+  hints = {},
 }: CardViewProps) => (
   <ul className={cx(styles.card, compact && styles.compact)}>
     {CARD_KEYS.map((key) => {
       const value = card[key];
       const isRevealed = revealed.includes(key);
       if (!value && !showHidden) return null;
-      const Icon = CARD_ICONS[key];
+      const Icon = TRAIT_ICONS[key];
 
       return (
         <li
@@ -69,13 +52,25 @@ export const CardView = ({
           )}
         >
           <span className={styles.label}>
-            <Icon size={14} />
+            <Icon size={14} style={{ color: traitColor(key) }} />
             {CARD_LABELS[key]}
           </span>
-          <span className={styles.value}>{value ?? "???"}</span>
+          <Value value={value} hint={value ? hints[value] : undefined} />
           {action && <span className={styles.action}>{action(key)}</span>}
         </li>
       );
     })}
   </ul>
 );
+
+/** Value text; with a description it gets an "i" and a tooltip. */
+const Value = ({ value, hint }: { value: string | undefined; hint: string | undefined }) => {
+  const { anchorProps, tooltip } = useTooltip<HTMLSpanElement>(hint);
+  return (
+    <span {...anchorProps} className={cx(styles.value, hint && styles.hoverable)}>
+      {value ?? "???"}
+      {hint && <Info size={12} className={styles.info} aria-label="Есть описание" />}
+      {tooltip}
+    </span>
+  );
+};

@@ -1,13 +1,18 @@
 import { observer } from "mobx-react-lite";
-import { Check, Crown, Dices, Eye, EyeOff, HeartPulse, Mic, Skull, UserX, Vote, WifiOff } from "lucide-react";
+import type { CSSProperties } from "react";
+import { Check, Crown, Gavel, Mic, MicOff, MoreVertical, Shield, Vote } from "lucide-react";
 
-import { CARD_LABELS, type CardKey, type GameView, type PublicPlayer, type RoomView } from "../../api/types";
-import { CardView } from "../../components/CardView";
-import { Badge, Button, cx } from "../../components/ui";
+import type { CardKey, GameView, PublicPlayer, RoomView } from "../../api/types";
+import { cx } from "../../components/ui";
 import { roomStore } from "../../store/roomStore";
-import { ParticipantVideo } from "../../voice/ParticipantVideo";
+import { MicIndicator, ParticipantMedia } from "../../voice/ParticipantMedia";
 import { useGameActions } from "./gameActions";
-import styles from "./GameScreen.module.css";
+import { TraitChips } from "./TraitChips";
+import styles from "./PlayerTile.module.css";
+
+/** Bottom-left column — the main characteristics; the rest go bottom-right. */
+const MAIN_TRAITS: CardKey[] = ["gender", "age", "profession", "health"];
+const OTHER_TRAITS: CardKey[] = ["phobia", "hobby", "baggage", "fact", "action"];
 
 /** Phases where the last vote count is shown on tiles. */
 const SHOW_TALLY = new Set(["VOTE_RESULT", "DEFENSE", "EXILE"]);
@@ -16,177 +21,128 @@ interface Props {
   player: PublicPlayer;
   view: RoomView;
   game: GameView;
+  width: number;
+  /** Position in the grid — staggers the entrance animation. */
+  index: number;
 }
 
-export const PlayerTile = observer(({ player, view, game }: Props) => {
-  const { act, pending, modSeconds } = useGameActions();
+/** A player's camera with their characteristics and game state on top. */
+export const PlayerTile = observer(({ player, view, game, width, index }: Props) => {
+  const { act, pending, openSide } = useGameActions();
   const { isModerator, isAlivePlayer } = roomStore;
 
   const isMe = player.id === view.meId;
+  const isModeratorTile = player.role === "MODERATOR";
   const inGame = player.isAlive && !player.hasLeft;
   const isSpeaker = game.speakerId === player.id;
   const finished = game.phase === "FINISHED";
 
-  const revealedKeys = Object.keys(player.revealed) as CardKey[];
-  // Moderator and the final screen get full cards; others see revealed values only.
-  const card = player.card ?? (isMe && view.myCard ? view.myCard : player.revealed);
-
   const canVote =
-    game.phase === "VOTING" &&
-    isAlivePlayer &&
-    !isMe &&
-    inGame &&
-    game.candidates.includes(player.id);
+    game.phase === "VOTING" && isAlivePlayer && !isMe && inGame && game.candidates.includes(player.id);
   const myVote = game.myVote === player.id;
+  const hasVoted = game.phase === "VOTING" && game.votedIds.includes(player.id);
+  const isReady = game.phase === "DISCUSSION" && game.readyToVote.includes(player.id);
 
-  const liveVotes = game.liveVotes
-    ? Object.values(game.liveVotes).filter((target) => target === player.id).length
-    : 0;
+  const liveVotes = game.liveVotes ? Object.values(game.liveVotes).filter((id) => id === player.id).length : 0;
   const tally = SHOW_TALLY.has(game.phase) ? (game.lastVote?.tally[player.id] ?? 0) : 0;
+  const votesAgainst = liveVotes || tally;
 
-  const moderatorTools = isModerator && !finished && player.card;
+  // Moderator and the final screen get full cards; others see revealed values only.
+  const card = player.card ?? { ...player.known, ...player.revealed };
+  const revealedKeys = Object.keys(player.revealed) as CardKey[];
+  const showTraits = !isMe && !isModeratorTile;
+  const canManage = isModerator && !isModeratorTile && !finished && !!player.card;
 
   return (
     <article
       className={cx(
         styles.tile,
-        isSpeaker && styles.tileSpeaking,
-        !inGame && styles.tileOut,
-        myVote && styles.tileVoted,
-        isMe && styles.tileMe,
+        isSpeaker && styles.speaker,
+        myVote && styles.voted,
+        !inGame && !isModeratorTile && styles.out,
       )}
+      style={{ width, "--i": index } as CSSProperties}
     >
-      <header className={styles.tileHeader}>
-        <div className={styles.tileName}>
-          {player.isHost && <Crown size={14} className={styles.hostIcon} aria-label="Хост" />}
-          <strong>{player.name}</strong>
-          {isMe && <Badge>вы</Badge>}
-          {!player.isOnline && !player.hasLeft && <WifiOff size={14} className="text-muted" aria-label="Не в сети" />}
+      <div className={styles.media}>
+        <ParticipantMedia playerId={player.id} name={player.name} />
+      </div>
+
+      {!inGame && !isModeratorTile && (
+        <span className={styles.stamp}>{player.hasLeft ? "Вышел" : "Изгнан"}</span>
+      )}
+
+      <div className={styles.top}>
+        <div className={styles.identity}>
+          <div className={styles.nameBar}>
+            {player.isHost && <Crown size={14} className={styles.crown} aria-label="Хост" />}
+            {isModeratorTile && <Gavel size={14} className={styles.crown} aria-label="Ведущий" />}
+            <span className={styles.name}>{player.name}</span>
+            {isMe && <span className={styles.me}>вы</span>}
+            {isModeratorTile && <span className={styles.me}>ведущий</span>}
+            <MicIndicator playerId={player.id} canMute={isModerator && !isMe} />
+          </div>
+          <div className={styles.badges}>
+            {isSpeaker && (
+              <span className={cx(styles.badge, styles.badgeAccent)}>
+                <Mic size={12} /> говорит
+              </span>
+            )}
+            {hasVoted && (
+              <span className={cx(styles.badge, styles.badgeSuccess)}>
+                <Check size={12} /> голос
+              </span>
+            )}
+            {isReady && <span className={cx(styles.badge, styles.badgeSuccess)}>готов</span>}
+            {game.silenced.includes(player.id) && (
+              <span className={cx(styles.badge, styles.badgeDanger)}>
+                <MicOff size={12} /> молчит
+              </span>
+            )}
+            {game.immune.includes(player.id) && (
+              <span className={cx(styles.badge, styles.badgeInfo)}>
+                <Shield size={12} /> иммунитет
+              </span>
+            )}
+            {votesAgainst > 0 && (
+              <span className={cx(styles.badge, styles.badgeDanger)}>
+                <Vote size={12} /> {votesAgainst}
+              </span>
+            )}
+          </div>
         </div>
-        <div className={styles.tileBadges}>
-          {isSpeaker && (
-            <Badge tone="accent" icon={<Mic size={12} />}>
-              говорит
-            </Badge>
-          )}
-          {player.hasLeft ? (
-            <Badge tone="danger">вышел</Badge>
-          ) : !player.isAlive ? (
-            <Badge tone="danger" icon={<Skull size={12} />}>
-              изгнан
-            </Badge>
-          ) : null}
-          {game.phase === "VOTING" && game.votedIds.includes(player.id) && (
-            <Badge tone="success" icon={<Check size={12} />}>
-              голос
-            </Badge>
-          )}
-          {game.phase === "DISCUSSION" && game.readyToVote.includes(player.id) && <Badge tone="success">готов</Badge>}
-          {liveVotes > 0 && <Badge tone="info">против: {liveVotes}</Badge>}
-          {tally > 0 && <Badge tone="info">голосов: {tally}</Badge>}
-        </div>
-      </header>
 
-      <ParticipantVideo playerId={player.id} name={player.name} canMute={isModerator && !isMe} />
-
-      <CardView
-        compact
-        showHidden
-        card={card}
-        revealed={revealedKeys}
-        action={
-          moderatorTools
-            ? (key) => <ModeratorCardTools playerId={player.id} cardKey={key} revealed={revealedKeys.includes(key)} />
-            : undefined
-        }
-      />
-
-      {(canVote || moderatorTools) && (
-        <footer className={styles.tileFooter}>
+        <div className={styles.actions}>
           {canVote && (
-            <Button
-              size="sm"
-              variant={myVote ? "danger" : "secondary"}
-              icon={<Vote size={14} />}
+            <button
+              type="button"
+              className={cx(styles.voteButton, myVote && styles.voteButtonActive)}
               disabled={pending}
               onClick={() => act("game:vote", { playerId: player.id })}
             >
+              <Vote size={14} />
               {myVote ? "Ваш голос" : "Голосовать"}
-            </Button>
+            </button>
           )}
-          {moderatorTools && inGame && (
-            <>
-              <Button
-                size="sm"
-                variant="ghost"
-                icon={<Mic size={14} />}
-                disabled={pending}
-                onClick={() => act("mod:speaker", { playerId: isSpeaker ? null : player.id, seconds: modSeconds })}
-              >
-                {isSpeaker ? "Забрать слово" : "Дать слово"}
-              </Button>
-              <Button
-                size="sm"
-                variant="danger"
-                icon={<UserX size={14} />}
-                disabled={pending}
-                onClick={() => confirm(`Изгнать ${player.name}?`) && act("mod:exile", { playerId: player.id })}
-              >
-                Изгнать
-              </Button>
-            </>
-          )}
-          {moderatorTools && !inGame && !player.hasLeft && (
-            <Button
-              size="sm"
-              variant="ghost"
-              icon={<HeartPulse size={14} />}
-              disabled={pending}
-              onClick={() => act("mod:revive", { playerId: player.id })}
+          {canManage && (
+            <button
+              type="button"
+              className={styles.menuButton}
+              aria-label={`Управление: ${player.name}`}
+              title="Управление игроком"
+              onClick={() => openSide({ kind: "player", playerId: player.id })}
             >
-              Вернуть в игру
-            </Button>
+              <MoreVertical size={16} />
+            </button>
           )}
-        </footer>
+        </div>
+      </div>
+
+      {showTraits && (
+        <div className={styles.bottom}>
+          <TraitChips keys={MAIN_TRAITS} card={card} revealed={revealedKeys} hints={view.hints} />
+          <TraitChips keys={OTHER_TRAITS} card={card} revealed={revealedKeys} hints={view.hints} align="end" />
+        </div>
       )}
     </article>
   );
 });
-
-const ModeratorCardTools = ({
-  playerId,
-  cardKey,
-  revealed,
-}: {
-  playerId: string;
-  cardKey: CardKey;
-  revealed: boolean;
-}) => {
-  const { act, pending } = useGameActions();
-  const label = CARD_LABELS[cardKey].toLowerCase();
-
-  return (
-    <>
-      <button
-        type="button"
-        className={styles.iconButton}
-        title={revealed ? `Скрыть: ${label}` : `Раскрыть: ${label}`}
-        aria-label={revealed ? `Скрыть: ${label}` : `Раскрыть: ${label}`}
-        disabled={pending}
-        onClick={() => act(revealed ? "mod:hide" : "mod:reveal", { playerId, key: cardKey })}
-      >
-        {revealed ? <EyeOff size={14} /> : <Eye size={14} />}
-      </button>
-      <button
-        type="button"
-        className={styles.iconButton}
-        title={`Заменить: ${label}`}
-        aria-label={`Заменить: ${label}`}
-        disabled={pending}
-        onClick={() => act("mod:reroll", { playerId, key: cardKey })}
-      >
-        <Dices size={14} />
-      </button>
-    </>
-  );
-};

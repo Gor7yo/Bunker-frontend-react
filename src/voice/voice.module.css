@@ -1,20 +1,4 @@
-/* ---- participant video ---------------------------------------------- */
-
-.video {
-  position: relative;
-  display: grid;
-  place-items: center;
-  aspect-ratio: 16 / 9;
-  width: 100%;
-  overflow: hidden;
-  background:
-    radial-gradient(circle at 50% 40%, var(--color-surface-3), var(--color-bg) 75%);
-  border-radius: var(--radius-md);
-}
-
-.sm {
-  aspect-ratio: 4 / 3;
-}
+/* ---- media (fills a positioned parent) ------------------------------ */
 
 .videoEl {
   position: absolute;
@@ -24,29 +8,28 @@
   object-fit: cover;
 }
 
+/* Own camera is shown like a mirror, as people expect. */
+.mirrored {
+  transform: scaleX(-1);
+}
+
 .initials {
+  position: absolute;
+  inset: 0;
+  display: grid;
+  place-items: center;
   font-family: var(--font-display);
-  font-size: var(--text-2xl);
+  font-size: clamp(1.25rem, 12cqi, 4rem);
   letter-spacing: 0.08em;
   color: var(--color-text-muted);
-}
-
-.sm .initials {
-  font-size: var(--text-lg);
-}
-
-.offAir {
-  position: absolute;
-  left: var(--space-2);
-  bottom: var(--space-2);
-  font-size: var(--text-xs);
-  color: var(--color-text-muted);
+  background: radial-gradient(circle at 50% 40%, var(--color-surface-3), var(--color-bg) 75%);
 }
 
 .speakingRing {
   position: absolute;
   inset: 0;
-  border: 2px solid transparent;
+  z-index: 3;
+  border: 3px solid transparent;
   border-radius: inherit;
   pointer-events: none;
   transition: border-color var(--duration-fast) var(--ease);
@@ -54,20 +37,23 @@
 
 .speaking {
   border-color: var(--color-success);
-  box-shadow: inset 0 0 12px rgb(156 195 90 / 0.35);
+  box-shadow: inset 0 0 18px rgb(156 195 90 / 0.35);
 }
 
-.micState,
+/* ---- mic indicator -------------------------------------------------- */
+
+.micOff,
 .muteButton {
-  position: absolute;
-  right: var(--space-2);
-  bottom: var(--space-2);
-  display: grid;
+  display: inline-grid;
   place-items: center;
-  width: 24px;
-  height: 24px;
+  width: 22px;
+  height: 22px;
+  flex-shrink: 0;
   border-radius: 50%;
   background: var(--color-overlay);
+}
+
+.micOff {
   color: var(--color-danger);
 }
 
@@ -79,6 +65,12 @@
 .muteButton:hover {
   color: var(--color-danger);
   border-color: var(--color-danger-border);
+}
+
+.offAir {
+  font-size: var(--text-xs);
+  color: var(--color-text-muted);
+  white-space: nowrap;
 }
 
 /* ---- controls ------------------------------------------------------- */
@@ -108,7 +100,7 @@
   position: absolute;
   top: calc(100% + var(--space-2));
   right: 0;
-  z-index: 5;
+  z-index: 20;
   display: flex;
   flex-direction: column;
   gap: var(--space-2);
@@ -125,27 +117,40 @@
   font-size: var(--text-sm);
 }
 
-/* ---- lobby strip ---------------------------------------------------- */
+/* ---- lobby grid ----------------------------------------------------- */
 
 .strip {
   display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(140px, 1fr));
+  grid-template-columns: repeat(auto-fill, minmax(min(100%, 220px), 1fr));
+  gap: var(--space-3);
+}
+
+.stripTile {
+  position: relative;
+  aspect-ratio: 16 / 9;
+  overflow: hidden;
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-md);
+  container-type: inline-size;
+  background: var(--color-bg);
+}
+
+.stripName {
+  position: absolute;
+  left: var(--space-2);
+  bottom: var(--space-2);
+  z-index: 2;
+  display: inline-flex;
+  align-items: center;
   gap: var(--space-2);
-}
-
-.stripItem {
-  display: flex;
-  flex-direction: column;
-  gap: var(--space-1);
-  font-size: var(--text-xs);
-  color: var(--color-text-secondary);
-  min-width: 0;
-}
-
-.stripItem > span {
+  max-width: calc(100% - 2 * var(--space-2));
+  padding: 2px var(--space-2);
+  background: var(--color-overlay);
+  border-radius: var(--radius-sm);
+  font-size: var(--text-sm);
+  white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
-  white-space: nowrap;
 }
 
 @media (max-width: 560px) {

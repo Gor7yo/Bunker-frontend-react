@@ -36,6 +36,19 @@
   overflow-wrap: anywhere;
 }
 
+.hoverable {
+  cursor: help;
+  text-decoration: underline dotted var(--color-text-muted);
+  text-underline-offset: 3px;
+}
+
+.info {
+  display: inline-block;
+  margin-left: var(--space-1);
+  vertical-align: -1px;
+  color: var(--color-text-muted);
+}
+
 .action {
   display: flex;
   gap: var(--space-1);

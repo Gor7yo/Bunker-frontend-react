@@ -1,27 +1,29 @@
-import { Clock, Home, Package, Radiation, Ruler } from "lucide-react";
+import { Clock, Home, Package, Radiation, Ruler, Users } from "lucide-react";
 
 import type { GameView } from "../../api/types";
-import { Panel } from "../../components/ui";
 import styles from "./GameScreen.module.css";
 
-export const ScenarioPanel = ({ game }: { game: GameView }) => {
+/** Contents of the "Scenario" drawer: catastrophe and bunker. */
+export const ScenarioContent = ({ game }: { game: GameView }) => {
   const { catastrophe, bunker } = game;
 
   return (
-    <Panel title="Сценарий" icon={<Radiation size={18} />}>
-      <div className={styles.scenario}>
-        <h3>{catastrophe.title}</h3>
-        <p className="text-secondary text-sm">{catastrophe.description}</p>
+    <>
+      <section className={styles.scenario}>
+        <h3>
+          <Radiation size={16} /> {catastrophe.title}
+        </h3>
+        <p className="text-secondary">{catastrophe.description}</p>
         <p className={styles.fact}>
           <Clock size={14} /> Пережидать в бункере: <strong>{catastrophe.stay}</strong>
         </p>
-      </div>
+      </section>
 
-      <div className={styles.scenario}>
+      <section className={styles.scenario}>
         <h3>
           <Home size={16} /> {bunker.title}
         </h3>
-        <p className="text-secondary text-sm">{bunker.description}</p>
+        <p className="text-secondary">{bunker.description}</p>
         <p className={styles.fact}>
           <Ruler size={14} /> {bunker.area} · <Package size={14} /> {bunker.supplies}
         </p>
@@ -31,9 +33,9 @@ export const ScenarioPanel = ({ game }: { game: GameView }) => {
           ))}
         </ul>
         <p className={styles.fact}>
-          Мест в бункере: <strong>{game.seats}</strong>
+          <Users size={14} /> Мест в бункере: <strong>{game.seats}</strong>
         </p>
-      </div>
-    </Panel>
+      </section>
+    </>
   );
 };

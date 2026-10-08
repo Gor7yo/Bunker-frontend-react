@@ -1,0 +1,288 @@
+.tile {
+  position: relative;
+  aspect-ratio: 16 / 9;
+  overflow: hidden;
+  background: var(--color-bg);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-lg);
+  box-shadow: var(--shadow-md);
+  /* Children scale fonts with the tile width (cqi units). */
+  container-type: inline-size;
+  transition:
+    border-color var(--duration) var(--ease),
+    box-shadow var(--duration) var(--ease),
+    opacity var(--duration-slow) var(--ease);
+  animation: scale-in 500ms var(--ease-out) backwards;
+  animation-delay: calc(var(--i, 0) * 60ms);
+}
+
+.media {
+  position: absolute;
+  inset: 0;
+}
+
+/* Narrow screens: one full-width column, taller tiles fit all the chips. */
+@container (max-width: 520px) {
+  .stamp {
+    top: 24%;
+  }
+}
+
+@media (max-width: 640px) {
+  .tile {
+    aspect-ratio: 4 / 3;
+  }
+}
+
+/* Readable overlays on top of any video */
+.media::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  z-index: 1;
+  pointer-events: none;
+  background:
+    linear-gradient(to bottom, rgb(0 0 0 / 0.55), transparent 28%),
+    linear-gradient(to top, rgb(0 0 0 / 0.6), transparent 45%);
+}
+
+.speaker {
+  border-color: var(--color-accent);
+  box-shadow:
+    0 0 0 2px var(--color-accent),
+    var(--shadow-accent);
+  animation: speaker-glow 1.8s ease-in-out infinite;
+}
+
+@keyframes speaker-glow {
+  50% {
+    box-shadow:
+      0 0 0 3px var(--color-accent),
+      0 0 28px -4px var(--color-accent);
+  }
+}
+
+.voted {
+  border-color: var(--color-danger);
+  box-shadow: 0 0 0 2px var(--color-danger);
+  animation: flash 500ms var(--ease-out);
+  --flash-color: var(--color-danger);
+}
+
+.media {
+  transition: filter 800ms var(--ease);
+}
+
+.out .media {
+  filter: grayscale(1) brightness(0.55);
+}
+
+.stamp {
+  position: absolute;
+  left: 50%;
+  z-index: 2;
+  padding: 0.15em 0.6em;
+  border: 3px solid var(--color-danger);
+  border-radius: var(--radius-sm);
+  color: var(--color-danger);
+  font-family: var(--font-display);
+  font-size: clamp(1rem, 7cqi, 2.5rem);
+  font-weight: 700;
+  letter-spacing: 0.15em;
+  text-transform: uppercase;
+  /* Upper part of the tile — the lower part is taken by characteristics. */
+  top: 30%;
+  transform: translate(-50%, -50%) rotate(-12deg);
+  opacity: 0.85;
+  pointer-events: none;
+  animation: stamp 600ms var(--ease-spring) backwards;
+}
+
+/* The stamp falls onto the tile */
+@keyframes stamp {
+  0% {
+    opacity: 0;
+    transform: translate(-50%, -50%) rotate(-30deg) scale(2.4);
+  }
+  60% {
+    opacity: 0.95;
+    transform: translate(-50%, -50%) rotate(-10deg) scale(0.92);
+  }
+  100% {
+    transform: translate(-50%, -50%) rotate(-12deg) scale(1);
+  }
+}
+
+/* ---- top row -------------------------------------------------------- */
+
+.top {
+  position: absolute;
+  inset: clamp(4px, 1.5cqi, 10px) clamp(4px, 1.5cqi, 10px) auto;
+  z-index: 2;
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: var(--space-2);
+}
+
+/* Top-left: name, then state badges */
+.identity {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 4px;
+  min-width: 0;
+}
+
+.badges,
+.actions {
+  display: flex;
+  gap: 4px;
+  flex-wrap: wrap;
+}
+
+.actions {
+  flex-shrink: 0;
+}
+
+.actions {
+  justify-content: flex-end;
+}
+
+.badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  padding: 2px 8px;
+  border-radius: var(--radius-full);
+  background: rgb(10 10 8 / 0.75);
+  font-size: clamp(10px, 2.4cqi, 13px);
+  font-weight: 600;
+  backdrop-filter: blur(6px);
+  animation: pop-in 320ms var(--ease-spring) backwards;
+}
+
+.badgeAccent {
+  color: var(--color-accent);
+  border: 1px solid var(--color-accent-border);
+}
+
+.badgeSuccess {
+  color: var(--color-success);
+  border: 1px solid var(--color-success-border);
+}
+
+.badgeDanger {
+  color: var(--color-danger);
+  border: 1px solid var(--color-danger-border);
+}
+
+.badgeInfo {
+  color: var(--color-info);
+  border: 1px solid var(--color-info-border);
+}
+
+.voteButton,
+.menuButton {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  min-height: 30px;
+  border-radius: var(--radius-md);
+  backdrop-filter: blur(6px);
+  transition:
+    background-color var(--duration) var(--ease),
+    color var(--duration) var(--ease);
+}
+
+.voteButton {
+  padding: 0 12px;
+  border: 1px solid var(--color-danger-border);
+  background: rgb(10 10 8 / 0.75);
+  color: var(--color-danger);
+  font-family: var(--font-display);
+  font-size: clamp(11px, 2.6cqi, 14px);
+  letter-spacing: var(--tracking-wide);
+  text-transform: uppercase;
+}
+
+.voteButton {
+  animation: pop-in 320ms var(--ease-spring) backwards;
+}
+
+.voteButton:hover:not(:disabled),
+.voteButtonActive {
+  background: var(--color-danger);
+  color: var(--color-text-inverse);
+}
+
+.voteButton:active:not(:disabled) {
+  transform: scale(0.94);
+}
+
+.menuButton {
+  justify-content: center;
+  width: 30px;
+  border: 1px solid var(--color-border-strong);
+  background: rgb(10 10 8 / 0.7);
+  color: var(--color-text);
+}
+
+.menuButton:hover {
+  border-color: var(--color-accent-border);
+  color: var(--color-accent);
+}
+
+/* ---- name (top-left) ---------------------------------------------- */
+
+.nameBar {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  max-width: 100%;
+  min-width: 0;
+  padding: 2px 8px;
+  background: rgb(10 10 8 / 0.6);
+  border-radius: var(--radius-sm);
+  font-size: clamp(12px, 3.2cqi, 18px);
+  backdrop-filter: blur(6px);
+}
+
+.name {
+  font-weight: 600;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.crown {
+  color: var(--color-accent);
+  flex-shrink: 0;
+}
+
+.me {
+  padding: 0 6px;
+  border-radius: var(--radius-sm);
+  background: rgb(255 255 255 / 0.12);
+  font-size: 0.75em;
+  color: var(--color-text-secondary);
+  flex-shrink: 0;
+}
+
+/* ---- bottom: main traits left, the rest right ----------------------- */
+
+.bottom {
+  position: absolute;
+  inset: auto clamp(4px, 1.5cqi, 10px) clamp(4px, 1.5cqi, 10px);
+  z-index: 2;
+  display: flex;
+  align-items: flex-end;
+  justify-content: space-between;
+  gap: var(--space-2);
+  pointer-events: none;
+}
+
+.bottom > * {
+  max-width: 49%;
+  pointer-events: auto;
+}
