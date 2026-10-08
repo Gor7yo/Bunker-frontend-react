@@ -75,10 +75,7 @@ export const Home = observer(() => {
       <header className={styles.hero}>
         <div className={styles.brand}>
           <Radiation size={40} className={styles.logoIcon} aria-hidden />
-          <div>
-            <h1 className={styles.logo}>Бункер</h1>
-            <p className={styles.tagline}>Зона не прощает ошибок. Убеди остальных, что ты нужен в бункере.</p>
-          </div>
+          <h1 className={styles.logo}>Бункер</h1>
         </div>
         <Button variant="primary" icon={<Plus size={18} />} onClick={() => navigate("/create")}>
           Создать комнату

@@ -332,6 +332,15 @@ a:hover {
   --ease-out: cubic-bezier(0.16, 1, 0.3, 1);
   --ease-spring: cubic-bezier(0.34, 1.56, 0.64, 1);
   --stagger: 45ms;
+  --hazard-animation: hazard-move 1.8s linear infinite;
+}
+
+/* Hazard stripes crawl slowly to the right. One step = one stripe period
+   measured horizontally (20px / sin 45°), so the loop is seamless. */
+@keyframes hazard-move {
+  to {
+    background-position-x: 28.2843px;
+  }
 }
 
 @keyframes fade-in {

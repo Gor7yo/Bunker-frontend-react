@@ -32,11 +32,6 @@
   line-height: 1;
 }
 
-.tagline {
-  margin-top: var(--space-2);
-  color: var(--color-text-secondary);
-}
-
 /* Name + private code in one row */
 .entry {
   display: grid;

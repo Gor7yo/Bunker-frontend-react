@@ -20,6 +20,7 @@
   inset: -1px -1px auto;
   height: 5px;
   background: var(--hazard-stripes);
+  animation: var(--hazard-animation);
   border-radius: var(--radius-lg) var(--radius-lg) 0 0;
   pointer-events: none;
 }

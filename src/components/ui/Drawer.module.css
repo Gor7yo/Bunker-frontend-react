@@ -35,6 +35,7 @@
   height: 4px;
   flex-shrink: 0;
   background: var(--hazard-stripes);
+  animation: var(--hazard-animation);
 }
 
 .right {
