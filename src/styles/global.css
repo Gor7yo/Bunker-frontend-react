@@ -1,0 +1,260 @@
+/* ==========================================================================
+   Design tokens. Components use only these variables — change the theme here.
+   ========================================================================== */
+
+:root {
+  color-scheme: dark;
+
+  /* Surfaces: from the deepest background to raised elements */
+  --color-bg: #0e0f0c;
+  --color-bg-elevated: #15160f;
+  --color-surface: #1b1c15;
+  --color-surface-2: #23241b;
+  --color-surface-3: #2d2e23;
+  --color-overlay: rgb(0 0 0 / 0.6);
+
+  /* Lines */
+  --color-border: #34352a;
+  --color-border-strong: #4a4b3b;
+
+  /* Text */
+  --color-text: #ebe6d6;
+  --color-text-secondary: #b3ad98;
+  --color-text-muted: #7c7865;
+  --color-text-inverse: #15130b;
+
+  /* Accent: radiation amber */
+  --color-accent: #e8a33d;
+  --color-accent-hover: #f2b350;
+  --color-accent-soft: rgb(232 163 61 / 0.14);
+  --color-accent-border: rgb(232 163 61 / 0.4);
+
+  /* Statuses */
+  --color-success: #9cc35a;
+  --color-success-soft: rgb(156 195 90 / 0.14);
+  --color-success-border: rgb(156 195 90 / 0.4);
+  --color-danger: #e2654a;
+  --color-danger-soft: rgb(226 101 74 / 0.14);
+  --color-danger-border: rgb(226 101 74 / 0.4);
+  --color-info: #7fb0c8;
+  --color-info-soft: rgb(127 176 200 / 0.14);
+  --color-info-border: rgb(127 176 200 / 0.4);
+
+  /* Typography */
+  --font-body: "Inter", system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+  --font-display: "Oswald", "Arial Narrow", sans-serif;
+  --font-mono: "JetBrains Mono", ui-monospace, Consolas, monospace;
+
+  --text-xs: 0.75rem;
+  --text-sm: 0.875rem;
+  --text-md: 1rem;
+  --text-lg: 1.125rem;
+  --text-xl: 1.5rem;
+  --text-2xl: 2rem;
+  --text-3xl: clamp(2.5rem, 8vw, 4rem);
+
+  --leading-tight: 1.2;
+  --leading-normal: 1.5;
+  --tracking-wide: 0.08em;
+
+  /* Spacing scale (4px grid) */
+  --space-1: 4px;
+  --space-2: 8px;
+  --space-3: 12px;
+  --space-4: 16px;
+  --space-5: 20px;
+  --space-6: 24px;
+  --space-8: 32px;
+  --space-10: 40px;
+  --space-12: 48px;
+
+  /* Shape */
+  --radius-sm: 4px;
+  --radius-md: 6px;
+  --radius-lg: 10px;
+  --radius-full: 999px;
+
+  /* Elevation */
+  --shadow-sm: 0 1px 2px rgb(0 0 0 / 0.4);
+  --shadow-md: 0 8px 24px -8px rgb(0 0 0 / 0.6);
+  --shadow-accent: 0 6px 20px -6px rgb(232 163 61 / 0.45);
+
+  /* Motion */
+  --ease: cubic-bezier(0.4, 0, 0.2, 1);
+  --duration-fast: 120ms;
+  --duration: 200ms;
+
+  /* Layout */
+  --container-width: 1120px;
+  --page-gutter: var(--space-4);
+  --control-height: 42px;
+  --control-height-sm: 32px;
+
+  /* Decorative hazard stripe for accents */
+  --hazard-stripes: repeating-linear-gradient(
+    -45deg,
+    var(--color-accent) 0 10px,
+    var(--color-bg) 10px 20px
+  );
+}
+
+/* ==========================================================================
+   Reset
+   ========================================================================== */
+
+*,
+*::before,
+*::after {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+}
+
+html {
+  -webkit-text-size-adjust: 100%;
+  text-size-adjust: 100%;
+}
+
+body {
+  min-height: 100vh;
+  font-family: var(--font-body);
+  font-size: var(--text-md);
+  line-height: var(--leading-normal);
+  color: var(--color-text);
+  background-color: var(--color-bg);
+  background-image:
+    radial-gradient(ellipse 80% 50% at 50% -10%, rgb(232 163 61 / 0.08), transparent 70%),
+    linear-gradient(rgb(255 255 255 / 0.015) 1px, transparent 1px),
+    linear-gradient(90deg, rgb(255 255 255 / 0.015) 1px, transparent 1px);
+  background-size:
+    100% 100%,
+    32px 32px,
+    32px 32px;
+  background-attachment: fixed;
+  -webkit-font-smoothing: antialiased;
+}
+
+#root {
+  min-height: 100vh;
+}
+
+img,
+svg {
+  display: block;
+  flex-shrink: 0;
+}
+
+button,
+input,
+select,
+textarea {
+  font: inherit;
+  color: inherit;
+}
+
+button {
+  cursor: pointer;
+}
+
+ul,
+ol {
+  list-style: none;
+}
+
+/* ==========================================================================
+   Base elements
+   ========================================================================== */
+
+h1,
+h2,
+h3,
+h4 {
+  font-family: var(--font-display);
+  font-weight: 600;
+  line-height: var(--leading-tight);
+  letter-spacing: 0.02em;
+  text-transform: uppercase;
+}
+
+h1 {
+  font-size: var(--text-2xl);
+}
+
+h2 {
+  font-size: var(--text-lg);
+}
+
+h3 {
+  font-size: var(--text-md);
+}
+
+a {
+  color: var(--color-accent);
+  text-decoration: none;
+}
+
+a:hover {
+  text-decoration: underline;
+}
+
+:focus-visible {
+  outline: 2px solid var(--color-accent);
+  outline-offset: 2px;
+}
+
+::selection {
+  background: var(--color-accent);
+  color: var(--color-text-inverse);
+}
+
+::-webkit-scrollbar {
+  width: 8px;
+  height: 8px;
+}
+
+::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+::-webkit-scrollbar-thumb {
+  background: var(--color-border-strong);
+  border-radius: var(--radius-full);
+}
+
+/* ==========================================================================
+   Utilities
+   ========================================================================== */
+
+.visually-hidden {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  overflow: hidden;
+  clip: rect(0 0 0 0);
+  white-space: nowrap;
+}
+
+.text-muted {
+  color: var(--color-text-muted);
+}
+
+.text-secondary {
+  color: var(--color-text-secondary);
+}
+
+.text-sm {
+  font-size: var(--text-sm);
+}
+
+.mono {
+  font-family: var(--font-mono);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    transition-duration: 0.01ms !important;
+  }
+}

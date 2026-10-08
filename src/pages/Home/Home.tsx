@@ -1,189 +1,210 @@
 import { observer } from "mobx-react-lite";
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { useNavigate } from "react-router-dom";
-import { Wifi, WifiOff, DoorOpen, Plus, Loader2 } from "lucide-react";
-import { useSocket } from "../../hooks/useSocket";
+import { Bot, DoorOpen, Gavel, KeyRound, Plus, Radiation, Undo2, Users } from "lucide-react";
+
+import {
+  DEFAULT_SETTINGS,
+  NAME_MAX_LENGTH,
+  type PublicRoomSummary,
+  type RoomSettings,
+  type SettingsPatch,
+} from "../../api/types";
+import { SettingsForm } from "../../components/SettingsForm";
+import { Alert, Badge, Button, Field, Input, Page, Panel, Spinner } from "../../components/ui";
+import { useAction } from "../../hooks/useAction";
+import { publicRoomsStore } from "../../store/publicRoomsStore";
+import { roomStore } from "../../store/roomStore";
+import { loadName } from "../../store/storage";
 import styles from "./Home.module.css";
-import { ReconnectBtn } from "../../components/ReconnectBtn/ReconnectBtn";
-import { gameStore } from "../../store/gameStore";
+
+const applyPatch = (base: RoomSettings, patch: SettingsPatch): RoomSettings => ({
+  ...base,
+  ...patch,
+  timers: { ...base.timers, ...patch.timers },
+});
 
 export const Home = observer(() => {
   const navigate = useNavigate();
-  const { socket, isConnected } = useSocket();
+  const { run, pending, error, setError } = useAction();
+  const nameRef = useRef<HTMLInputElement>(null);
 
-  const [playerName, setPlayerName] = useState(gameStore.playerName || "");
-  const [roomCode, setRoomCode] = useState(gameStore.roomCode || "");
-  const [error, setError] = useState("");
-  const [isCreating, setIsCreating] = useState(false);
+  const [name, setName] = useState(loadName);
+  const [code, setCode] = useState("");
+  const [settings, setSettings] = useState(DEFAULT_SETTINGS);
 
-  const updatePlayerName = (name: string) => {
-    setPlayerName(name);
-    gameStore.setPlayerName(name);
-  };
+  const { view, connected, notice } = roomStore;
 
-  useEffect(() => {
-    if (!socket) return;
+  useEffect(() => publicRoomsStore.watch(), []);
 
-    const onCreated = (data: any) => {
-      setIsCreating(false);
-
-      const currentName = playerName.trim() || gameStore.playerName || "Player";
-
-      gameStore.setRoomCode(data.roomCode);
-      gameStore.setPlayerName(currentName);
-      gameStore.setIsHost(true);
-
-      if (data.host) {
-        gameStore.setPlayers([data.host]);
-      }
-
-      navigate(`/room/${data.roomCode}`);
-    };
-
-    const onJoined = (data: any) => {
-      const currentName = playerName.trim() || gameStore.playerName || "Player";
-
-      gameStore.setRoomCode(data.roomCode);
-      gameStore.setPlayerName(currentName);
-      gameStore.setIsHost(data.player?.isHost ?? false);
-      gameStore.setPlayers(data.players);
-      gameStore.setGameState(data.gameState);
-
-      navigate(`/room/${data.roomCode}`);
-    };
-
-    const onError = (data: any) => {
-      setIsCreating(false);
-      setError(data.message);
-    };
-
-    socket.on("room:created", onCreated);
-    socket.on("room:joined", onJoined);
-    socket.on("room:error", onError);
-
-    return () => {
-      socket.off("room:created", onCreated);
-      socket.off("room:joined", onJoined);
-      socket.off("room:error", onError);
-    };
-  }, [socket, navigate, playerName]);
-
-  useEffect(() => {
-    gameStore.clearStorage();
-  }, []);
-
-  const handleCreateRoom = () => {
-    const trimmedName = playerName.trim();
-    if (!trimmedName) {
-      setError("Enter your name");
+  /** Runs an action that needs a name; focuses the name field if it's empty. */
+  const withName = (action: (name: string) => Promise<string>) => {
+    const trimmed = name.trim();
+    if (!trimmed) {
+      setError("Сначала введите позывной");
+      nameRef.current?.focus();
       return;
     }
-
-    gameStore.setPlayerName(trimmedName);
-    setError("");
-    setIsCreating(true);
-
-    socket?.emit("room:create", {
-      hostName: trimmedName,
-    });
+    void run(async () => navigate(`/room/${await action(trimmed)}`));
   };
 
-  const handleJoinRoom = () => {
-    const trimmedName = playerName.trim();
-    const trimmedCode = roomCode.trim().toUpperCase();
-
-    if (!trimmedName) {
-      setError("Enter your name");
-      return;
-    }
-
-    if (!trimmedCode) {
-      setError("Enter room code");
-      return;
-    }
-
-    gameStore.setPlayerName(trimmedName);
-    setError("");
-
-    socket?.emit("room:join", {
-      roomCode: trimmedCode,
-      playerName: trimmedName,
-    });
-  };
+  const joinRoom = (roomCode: string) => withName((n) => roomStore.join(roomCode, n));
+  const createRoom = () => withName((n) => roomStore.create(n, settings));
 
   return (
-    <div className={styles.container}>
-      <div className={styles.card}>
-        <h1 className={styles.title}>Bunker</h1>
-        <p className={styles.subtitle}>Survive in the world of stalkers</p>
+    <Page>
+      <header className={styles.hero}>
+        <Radiation size={40} className={styles.logoIcon} aria-hidden />
+        <div>
+          <h1 className={styles.logo}>Бункер</h1>
+          <p className={styles.tagline}>Зона не прощает ошибок. Убеди остальных, что ты нужен в бункере.</p>
+        </div>
+      </header>
 
-        {error && <div className={styles.error}>{error}</div>}
+      {notice && (
+        <Alert tone="info" onClose={roomStore.dismissNotice}>
+          {notice}
+        </Alert>
+      )}
 
-        <div className={styles.form}>
-          <input
-            className={styles.input}
-            placeholder="Your name"
-            value={playerName}
-            onChange={(e) => updatePlayerName(e.target.value)}
+      {view && (
+        <Button variant="success" block icon={<Undo2 size={18} />} onClick={() => navigate(`/room/${view.code}`)}>
+          Вернуться в комнату {view.code}
+        </Button>
+      )}
+
+      <Panel accent>
+        <Field label="Позывной" hint="Под этим именем вас увидят другие игроки">
+          <Input
+            ref={nameRef}
+            className={styles.nameInput}
+            placeholder="Например, Меченый"
+            maxLength={NAME_MAX_LENGTH}
+            value={name}
+            onChange={(e) => setName(e.target.value)}
           />
+        </Field>
+        {error && <Alert onClose={() => setError(null)}>{error}</Alert>}
+      </Panel>
 
-          <div className={styles.joinRow}>
-            <input
-              className={styles.inputSmall}
-              placeholder="Room code"
-              value={roomCode}
-              maxLength={6}
-              onChange={(e) => setRoomCode(e.target.value.toUpperCase())}
-            />
+      <div className={styles.grid}>
+        <Panel
+          title="Открытые комнаты"
+          icon={<Users size={18} />}
+          actions={<Badge tone={connected ? "success" : "danger"}>{connected ? "в сети" : "нет связи"}</Badge>}
+          className={styles.rooms}
+        >
+          <PublicRooms disabled={pending || !connected} onJoin={joinRoom} />
+        </Panel>
 
-            <button
-              type="button"
-              className={`${styles.button} ${styles.buttonSecondary}`}
-              onClick={handleJoinRoom}
+        <div className={styles.side}>
+          <Panel title="Приватная комната" icon={<KeyRound size={18} />}>
+            <form
+              className={styles.codeRow}
+              onSubmit={(e) => {
+                e.preventDefault();
+                joinRoom(code);
+              }}
             >
-              <DoorOpen size={18} />
-              <span>Join</span>
-            </button>
-          </div>
+              <Input
+                className={styles.codeInput}
+                placeholder="КОД"
+                aria-label="Код комнаты"
+                maxLength={8}
+                value={code}
+                onChange={(e) => setCode(e.target.value.toUpperCase().replace(/\s/g, ""))}
+              />
+              <Button type="submit" icon={<DoorOpen size={16} />} disabled={pending || !connected || !code}>
+                Войти
+              </Button>
+            </form>
+          </Panel>
 
-          <button
-            type="button"
-            disabled={isCreating || !isConnected}
-            className={`${styles.button} ${styles.buttonPrimary}`}
-            onClick={handleCreateRoom}
-          >
-            {isCreating ? (
-              <>
-                <Loader2 size={18} className={styles.spinner} />
-                <span>Creating...</span>
-              </>
-            ) : (
-              <>
-                <Plus size={18} />
-                <span>Create room</span>
-              </>
-            )}
-          </button>
+          <Panel title="Новая комната" icon={<Plus size={18} />}>
+            <SettingsForm
+              value={settings}
+              titlePlaceholder={`Комната ${name.trim() || "игрока"}`}
+              onChange={(patch) => setSettings((s) => applyPatch(s, patch))}
+            />
+            <Button variant="primary" block loading={pending} disabled={!connected} onClick={createRoom}>
+              Создать комнату
+            </Button>
+          </Panel>
         </div>
-
-        <div className={styles.status}>
-          {isConnected ? (
-            <>
-              <Wifi size={14} />
-              <span>Connected</span>
-            </>
-          ) : (
-            <>
-              <WifiOff size={14} />
-              <span>Connecting...</span>
-            </>
-          )}
-        </div>
-
-        {/* {gameStore.roomCode && gameStore.playerName && (
-          <ReconnectBtn roomCode={gameStore.roomCode} />
-        )} */}
       </div>
-    </div>
+    </Page>
   );
 });
+
+const PublicRooms = observer(({ disabled, onJoin }: { disabled: boolean; onJoin: (code: string) => void }) => {
+  const { rooms, loading } = publicRoomsStore;
+
+  if (loading) {
+    return (
+      <div className={styles.empty}>
+        <Spinner />
+      </div>
+    );
+  }
+
+  if (rooms.length === 0) {
+    return (
+      <div className={styles.empty}>
+        <Radiation size={32} aria-hidden />
+        <p>Открытых комнат пока нет.</p>
+        <p className="text-muted text-sm">Создайте свою — она появится здесь для всех.</p>
+      </div>
+    );
+  }
+
+  return (
+    <ul className={styles.roomList}>
+      {rooms.map((room) => (
+        <PublicRoomRow key={room.code} room={room} disabled={disabled} onJoin={onJoin} />
+      ))}
+    </ul>
+  );
+});
+
+const PublicRoomRow = ({
+  room,
+  disabled,
+  onJoin,
+}: {
+  room: PublicRoomSummary;
+  disabled: boolean;
+  onJoin: (code: string) => void;
+}) => {
+  const isFull = room.players >= room.maxPlayers;
+
+  return (
+    <li className={styles.room}>
+      <div className={styles.roomInfo}>
+        <strong className={styles.roomTitle}>{room.title}</strong>
+        <div className={styles.roomMeta}>
+          {room.mode === "AUTO" ? (
+            <Badge icon={<Bot size={12} />}>авто</Badge>
+          ) : (
+            <Badge tone="accent" icon={<Gavel size={12} />}>
+              с ведущим
+            </Badge>
+          )}
+          <span className="text-muted text-sm">хост: {room.hostName}</span>
+        </div>
+      </div>
+
+      <div className={styles.roomSlots}>
+        <span className="mono">
+          {room.players}/{room.maxPlayers}
+        </span>
+        <span className={styles.slotsBar}>
+          <span style={{ width: `${Math.min(100, (room.players / room.maxPlayers) * 100)}%` }} />
+        </span>
+      </div>
+
+      <Button size="sm" variant={isFull ? "ghost" : "secondary"} disabled={disabled || isFull} onClick={() => onJoin(room.code)}>
+        {isFull ? "Мест нет" : "Войти"}
+      </Button>
+    </li>
+  );
+};
