@@ -1,77 +1,89 @@
-# React + TypeScript + Vite
+# Бункер — клиент
 
-This template provides a minimal setup to get React working in Vite with HMR and some ESLint rules.
+Браузерный клиент онлайн-игры «Бункер» в сеттинге S.T.A.L.K.E.R.: вебки игроков с характеристиками прямо на видео, голос, карты действий, анимации и звуки Зоны.
 
-Currently, two official plugins are available:
+Сервер: [bunker-server-nestjs](https://github.com/Gor7yo/bunker-server-nestjs).
 
-- [@vitejs/plugin-react](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react) uses [Oxc](https://oxc.rs)
-- [@vitejs/plugin-react-swc](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react-swc) uses [SWC](https://swc.rs/)
+## Возможности
 
-## React Compiler
+- **Главная** — список публичных комнат с поиском и фильтрами (режим, есть места, сортировка; фильтры живут в адресе страницы и обновляются в реальном времени), вход в приватную комнату по коду, отдельная страница создания комнаты.
+- **Лобби** — вебки, готовность, настройки комнаты (режим, лимит, таймеры, правила карт действий), назначение ведущего, кик, передача хоста. Ссылка `/room/КОД` работает как приглашение.
+- **Экран игры как видеоконференция**
+  - плитки вебок сами подбирают размер, чтобы все игроки помещались на экран;
+  - характеристики — цветными плашками прямо на вебке: главные слева снизу, остальные справа снизу; нераскрытые показаны названием («Возраст»), описания — во всплывающей подсказке;
+  - строка фазы с шагами раунда и тающей полоской таймера;
+  - «Моя карта» выезжает сверху и открывается сама в ваш ход; там же — карта действия с выбором целей;
+  - «Сценарий», «Журнал», «Как играть», пульт ведущего — в выезжающих панелях.
+- **Связь** — док в правом нижнем углу: микрофон и камера (зелёный — включено, красный — выключено), выбор устройств, звуки игры. Горячие клавиши **M** и **V**.
+- **Атмосфера** — табличка «РАУНД N», которая стареет с каждым раундом (ржавчина, копоть, мох); процедурные звуки (Гейгер, рация, гермодверь, аномалия); финал с закрывающейся или открывающейся дверью бункера, интерфейс краснеет или зеленеет.
 
-The React Compiler is enabled on this template. See [this documentation](https://react.dev/learn/react-compiler) for more information.
+## Стек
 
-Note: This will impact Vite dev & build performances.
+React 19 · TypeScript · Vite · MobX · Socket.IO client · LiveKit (`livekit-client`, `@livekit/components-react`) · CSS Modules · lucide-react
 
-## Expanding the ESLint configuration
+## Быстрый старт
 
-If you are developing a production application, we recommend updating the configuration to enable type-aware lint rules:
+Нужны Node.js 22+, pnpm и запущенный [сервер](https://github.com/Gor7yo/bunker-server-nestjs).
 
-```js
-export default defineConfig([
-  globalIgnores(['dist']),
-  {
-    files: ['**/*.{ts,tsx}'],
-    extends: [
-      // Other configs...
-
-      // Remove tseslint.configs.recommended and replace with this
-      tseslint.configs.recommendedTypeChecked,
-      // Alternatively, use this for stricter rules
-      tseslint.configs.strictTypeChecked,
-      // Optionally, add this for stylistic rules
-      tseslint.configs.stylisticTypeChecked,
-
-      // Other configs...
-    ],
-    languageOptions: {
-      parserOptions: {
-        project: ['./tsconfig.node.json', './tsconfig.app.json'],
-        tsconfigRootDir: import.meta.dirname,
-      },
-      // other options...
-    },
-  },
-])
-
+```bash
+pnpm install
+cp .env.example .env     # адрес сервера, если не localhost:3000
+pnpm dev                 # http://localhost:5173
 ```
 
-You can also install [eslint-plugin-react-x](https://github.com/Rel1cx/eslint-react/tree/main/packages/plugins/eslint-plugin-react-x) and [eslint-plugin-react-dom](https://github.com/Rel1cx/eslint-react/tree/main/packages/plugins/eslint-plugin-react-dom) for React-specific lint rules:
+| Переменная | Описание | По умолчанию |
+|---|---|---|
+| `VITE_SERVER_URL` | Адрес сервера | `http://localhost:3000` |
 
-```js
-// eslint.config.js
-import reactX from 'eslint-plugin-react-x'
-import reactDom from 'eslint-plugin-react-dom'
+> Камера и микрофон в браузере работают только на `localhost` или по **HTTPS**. Для игры с друзьями по сети клиент нужно отдавать по HTTPS.
 
-export default defineConfig([
-  globalIgnores(['dist']),
-  {
-    files: ['**/*.{ts,tsx}'],
-    extends: [
-      // Other configs...
-      // Enable lint rules for React
-      reactX.configs['recommended-typescript'],
-      // Enable lint rules for React DOM
-      reactDom.configs.recommended,
-    ],
-    languageOptions: {
-      parserOptions: {
-        project: ['./tsconfig.node.json', './tsconfig.app.json'],
-        tsconfigRootDir: import.meta.dirname,
-      },
-      // other options...
-    },
-  },
-])
+### Скрипты
+
+| Команда | Что делает |
+|---|---|
+| `pnpm dev` | Дев-сервер с горячей перезагрузкой |
+| `pnpm build` | Проверка типов и сборка в `dist/` |
+| `pnpm preview` | Просмотр собранной версии |
+| `pnpm lint` | ESLint |
+
+## Структура
 
 ```
+src/
+├── api/                  # сокет и запросы с ack, типы протокола, GET /rooms
+├── store/                # roomStore (состояние комнаты, сессия), toastStore, localStorage
+├── hooks/                # useAction, useCountdown, useFitGrid, usePublicRooms
+├── styles/global.css     # дизайн-токены, сброс стилей, анимации, темы финала
+├── components/
+│   ├── ui/               # UI-кит: Button, Panel, Field, Select, Switch, Badge, Alert,
+│   │                     #   Drawer, Toaster, Spinner, Page, useTooltip
+│   ├── CardView.tsx      # список характеристик (Моя карта, карта игрока у ведущего)
+│   ├── SettingsForm.tsx  # настройки комнаты
+│   └── traits.ts         # иконки и цвета характеристик
+├── pages/
+│   ├── Home/             # список комнат и фильтры
+│   ├── CreateRoom/       # создание комнаты
+│   ├── Room/             # /room/:code — лобби, игра или вход по ссылке
+│   ├── Lobby/
+│   └── GameScreen/       # экран игры: плитки, плашки, фаза, панели, финал
+├── voice/                # LiveKit: комната, видео игроков, док связи
+└── sound/                # процедурные звуки (Web Audio) и их триггеры
+```
+
+### Как устроено
+
+- **Сервер — единственный источник правды.** Клиент шлёт команды (`request(event, payload)` ждёт ответ `{ ok, data | error }`), а новое состояние приходит событием `room:state` в `roomStore`.
+- **Сессия** — токен в `localStorage`. После обновления страницы или обрыва связи клиент восстанавливает её сам.
+- **Время таймеров** считается с поправкой на расхождение часов клиента и сервера (`serverNow`).
+- **Страница комнаты** загружается отдельным чанком (`React.lazy`), поэтому LiveKit не утяжеляет главную.
+
+## Дизайн-система
+
+Все цвета, отступы, шрифты, радиусы и анимации — токены в [`src/styles/global.css`](src/styles/global.css); компоненты используют только их. Тема меняется в одном месте:
+
+- `--color-accent` и производные — акцент (радиационный янтарь; в финале краснеет или зеленеет);
+- `--trait-*` — цвета характеристик на плашках;
+- `--hazard-stripes`, `--hazard-animation` — движущиеся чёрно-жёлтые полосы;
+- `.enter`, `.enter-scale`, `.pop` + `style={{ "--i": index }}` — появление элементов лесенкой.
+
+Учтена настройка системы «уменьшить движение»: анимации в этом режиме отключаются.
