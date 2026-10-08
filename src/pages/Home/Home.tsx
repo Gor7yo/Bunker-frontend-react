@@ -1,28 +1,44 @@
 import { observer } from "mobx-react-lite";
 import { useEffect, useRef, useState } from "react";
-import { useNavigate } from "react-router-dom";
-import { Bot, DoorOpen, Gavel, KeyRound, Plus, Radiation, Undo2, Users } from "lucide-react";
+import { useNavigate, useSearchParams } from "react-router-dom";
+import { Bot, DoorOpen, Gavel, Plus, Radiation, Search, Undo2, Users, X } from "lucide-react";
 
-import {
-  DEFAULT_SETTINGS,
-  NAME_MAX_LENGTH,
-  type PublicRoomSummary,
-  type RoomSettings,
-  type SettingsPatch,
-} from "../../api/types";
-import { SettingsForm } from "../../components/SettingsForm";
-import { Alert, Badge, Button, Field, Input, Page, Panel, Spinner } from "../../components/ui";
+import { DEFAULT_FILTERS, type RoomFilters, type RoomSort } from "../../api/rooms";
+import { NAME_MAX_LENGTH, type GameMode, type PublicRoomSummary } from "../../api/types";
+import { Alert, Badge, Button, Field, Input, Page, Panel, Select, Spinner, cx } from "../../components/ui";
 import { useAction } from "../../hooks/useAction";
-import { publicRoomsStore } from "../../store/publicRoomsStore";
+import { usePublicRooms } from "../../hooks/usePublicRooms";
 import { roomStore } from "../../store/roomStore";
-import { loadName } from "../../store/storage";
+import { loadName, saveName } from "../../store/storage";
 import styles from "./Home.module.css";
 
-const applyPatch = (base: RoomSettings, patch: SettingsPatch): RoomSettings => ({
-  ...base,
-  ...patch,
-  timers: { ...base.timers, ...patch.timers },
-});
+const SEARCH_DEBOUNCE_MS = 300;
+
+const MODE_FILTERS: { value: GameMode | ""; label: string }[] = [
+  { value: "", label: "Все" },
+  { value: "AUTO", label: "Авто" },
+  { value: "MODERATED", label: "С ведущим" },
+];
+
+/** Filters live in the URL: ?q=&mode=&free=1&sort=new */
+const filtersFromParams = (params: URLSearchParams): RoomFilters => {
+  const mode = params.get("mode");
+  return {
+    q: params.get("q") ?? "",
+    mode: mode === "AUTO" || mode === "MODERATED" ? mode : "",
+    freeSlots: params.get("free") === "1",
+    sort: params.get("sort") === "new" ? "new" : "popular",
+  };
+};
+
+const filtersToParams = (filters: RoomFilters) => {
+  const params = new URLSearchParams();
+  if (filters.q) params.set("q", filters.q);
+  if (filters.mode) params.set("mode", filters.mode);
+  if (filters.freeSlots) params.set("free", "1");
+  if (filters.sort !== DEFAULT_FILTERS.sort) params.set("sort", filters.sort);
+  return params;
+};
 
 export const Home = observer(() => {
   const navigate = useNavigate();
@@ -31,34 +47,42 @@ export const Home = observer(() => {
 
   const [name, setName] = useState(loadName);
   const [code, setCode] = useState("");
-  const [settings, setSettings] = useState(DEFAULT_SETTINGS);
+
+  const [searchParams, setSearchParams] = useSearchParams();
+  const filters = filtersFromParams(searchParams);
+  const updateFilters = (patch: Partial<RoomFilters>) =>
+    setSearchParams(filtersToParams({ ...filters, ...patch }), { replace: true });
 
   const { view, connected, notice } = roomStore;
 
-  useEffect(() => publicRoomsStore.watch(), []);
+  const changeName = (value: string) => {
+    setName(value);
+    saveName(value.trim());
+  };
 
-  /** Runs an action that needs a name; focuses the name field if it's empty. */
-  const withName = (action: (name: string) => Promise<string>) => {
+  const joinRoom = (roomCode: string) => {
     const trimmed = name.trim();
     if (!trimmed) {
       setError("Сначала введите позывной");
       nameRef.current?.focus();
       return;
     }
-    void run(async () => navigate(`/room/${await action(trimmed)}`));
+    void run(async () => navigate(`/room/${await roomStore.join(roomCode, trimmed)}`));
   };
-
-  const joinRoom = (roomCode: string) => withName((n) => roomStore.join(roomCode, n));
-  const createRoom = () => withName((n) => roomStore.create(n, settings));
 
   return (
     <Page>
       <header className={styles.hero}>
-        <Radiation size={40} className={styles.logoIcon} aria-hidden />
-        <div>
-          <h1 className={styles.logo}>Бункер</h1>
-          <p className={styles.tagline}>Зона не прощает ошибок. Убеди остальных, что ты нужен в бункере.</p>
+        <div className={styles.brand}>
+          <Radiation size={40} className={styles.logoIcon} aria-hidden />
+          <div>
+            <h1 className={styles.logo}>Бункер</h1>
+            <p className={styles.tagline}>Зона не прощает ошибок. Убеди остальных, что ты нужен в бункере.</p>
+          </div>
         </div>
+        <Button variant="primary" icon={<Plus size={18} />} onClick={() => navigate("/create")}>
+          Создать комнату
+        </Button>
       </header>
 
       {notice && (
@@ -74,97 +98,185 @@ export const Home = observer(() => {
       )}
 
       <Panel accent>
-        <Field label="Позывной" hint="Под этим именем вас увидят другие игроки">
-          <Input
-            ref={nameRef}
-            className={styles.nameInput}
-            placeholder="Например, Меченый"
-            maxLength={NAME_MAX_LENGTH}
-            value={name}
-            onChange={(e) => setName(e.target.value)}
-          />
-        </Field>
-        {error && <Alert onClose={() => setError(null)}>{error}</Alert>}
-      </Panel>
-
-      <div className={styles.grid}>
-        <Panel
-          title="Открытые комнаты"
-          icon={<Users size={18} />}
-          actions={<Badge tone={connected ? "success" : "danger"}>{connected ? "в сети" : "нет связи"}</Badge>}
-          className={styles.rooms}
-        >
-          <PublicRooms disabled={pending || !connected} onJoin={joinRoom} />
-        </Panel>
-
-        <div className={styles.side}>
-          <Panel title="Приватная комната" icon={<KeyRound size={18} />}>
-            <form
-              className={styles.codeRow}
-              onSubmit={(e) => {
-                e.preventDefault();
-                joinRoom(code);
-              }}
-            >
+        <div className={styles.entry}>
+          <Field label="Позывной">
+            <Input
+              ref={nameRef}
+              placeholder="Например, Меченый"
+              maxLength={NAME_MAX_LENGTH}
+              value={name}
+              onChange={(e) => changeName(e.target.value)}
+            />
+          </Field>
+          <form
+            className={styles.codeForm}
+            onSubmit={(e) => {
+              e.preventDefault();
+              joinRoom(code);
+            }}
+          >
+            <Field label="Код приватной комнаты">
               <Input
                 className={styles.codeInput}
                 placeholder="КОД"
-                aria-label="Код комнаты"
                 maxLength={8}
                 value={code}
                 onChange={(e) => setCode(e.target.value.toUpperCase().replace(/\s/g, ""))}
               />
-              <Button type="submit" icon={<DoorOpen size={16} />} disabled={pending || !connected || !code}>
-                Войти
-              </Button>
-            </form>
-          </Panel>
-
-          <Panel title="Новая комната" icon={<Plus size={18} />}>
-            <SettingsForm
-              value={settings}
-              titlePlaceholder={`Комната ${name.trim() || "игрока"}`}
-              onChange={(patch) => setSettings((s) => applyPatch(s, patch))}
-            />
-            <Button variant="primary" block loading={pending} disabled={!connected} onClick={createRoom}>
-              Создать комнату
+            </Field>
+            <Button type="submit" icon={<DoorOpen size={16} />} disabled={pending || !connected || !code}>
+              Войти
             </Button>
-          </Panel>
+          </form>
         </div>
-      </div>
+        {error && <Alert onClose={() => setError(null)}>{error}</Alert>}
+      </Panel>
+
+      <PublicRooms
+        filters={filters}
+        onFiltersChange={updateFilters}
+        disabled={pending || !connected}
+        onJoin={joinRoom}
+      />
     </Page>
   );
 });
 
-const PublicRooms = observer(({ disabled, onJoin }: { disabled: boolean; onJoin: (code: string) => void }) => {
-  const { rooms, loading } = publicRoomsStore;
+interface PublicRoomsProps {
+  filters: RoomFilters;
+  onFiltersChange: (patch: Partial<RoomFilters>) => void;
+  disabled: boolean;
+  onJoin: (code: string) => void;
+}
 
-  if (loading) {
-    return (
-      <div className={styles.empty}>
-        <Spinner />
-      </div>
-    );
-  }
-
-  if (rooms.length === 0) {
-    return (
-      <div className={styles.empty}>
-        <Radiation size={32} aria-hidden />
-        <p>Открытых комнат пока нет.</p>
-        <p className="text-muted text-sm">Создайте свою — она появится здесь для всех.</p>
-      </div>
-    );
-  }
+const PublicRooms = ({ filters, onFiltersChange, disabled, onJoin }: PublicRoomsProps) => {
+  const { rooms, total, loading, initialLoading, error } = usePublicRooms(filters);
+  const hasFilters = filters.q !== "" || filters.mode !== "" || filters.freeSlots;
 
   return (
-    <ul className={styles.roomList}>
-      {rooms.map((room) => (
-        <PublicRoomRow key={room.code} room={room} disabled={disabled} onJoin={onJoin} />
-      ))}
-    </ul>
+    <Panel
+      title="Открытые комнаты"
+      icon={<Users size={18} />}
+      actions={
+        <span className={styles.found}>
+          {loading && !initialLoading && <Spinner size={14} />}
+          найдено: {total}
+        </span>
+      }
+    >
+      <div className={styles.filters}>
+        <SearchInput value={filters.q} onChange={(q) => onFiltersChange({ q })} />
+
+        <div className={styles.segmented} role="radiogroup" aria-label="Режим">
+          {MODE_FILTERS.map((option) => (
+            <button
+              key={option.value}
+              type="button"
+              role="radio"
+              aria-checked={filters.mode === option.value}
+              className={cx(styles.segment, filters.mode === option.value && styles.segmentActive)}
+              onClick={() => onFiltersChange({ mode: option.value })}
+            >
+              {option.label}
+            </button>
+          ))}
+        </div>
+
+        <label className={styles.checkbox}>
+          <input
+            type="checkbox"
+            checked={filters.freeSlots}
+            onChange={(e) => onFiltersChange({ freeSlots: e.target.checked })}
+          />
+          Есть места
+        </label>
+
+        <Select
+          className={styles.sort}
+          aria-label="Сортировка"
+          value={filters.sort}
+          onChange={(e) => onFiltersChange({ sort: e.target.value as RoomSort })}
+        >
+          <option value="popular">Сначала заполненные</option>
+          <option value="new">Сначала новые</option>
+        </Select>
+      </div>
+
+      {error && <Alert>{error}</Alert>}
+
+      {initialLoading ? (
+        <div className={styles.empty}>
+          <Spinner />
+        </div>
+      ) : rooms.length === 0 ? (
+        <div className={styles.empty}>
+          <Radiation size={32} aria-hidden />
+          {hasFilters ? (
+            <>
+              <p>Ничего не найдено.</p>
+              <Button
+                size="sm"
+                variant="ghost"
+                icon={<X size={14} />}
+                onClick={() => onFiltersChange({ q: "", mode: "", freeSlots: false })}
+              >
+                Сбросить фильтры
+              </Button>
+            </>
+          ) : (
+            <>
+              <p>Открытых комнат пока нет.</p>
+              <p className="text-muted text-sm">Создайте свою — она появится здесь для всех.</p>
+            </>
+          )}
+        </div>
+      ) : (
+        <ul className={cx(styles.roomList, loading && styles.stale)}>
+          {rooms.map((room) => (
+            <PublicRoomRow key={room.code} room={room} disabled={disabled} onJoin={onJoin} />
+          ))}
+        </ul>
+      )}
+
+      {rooms.length < total && (
+        <p className="text-muted text-sm">
+          Показаны {rooms.length} из {total}. Уточните поиск, чтобы найти нужную комнату.
+        </p>
+      )}
+    </Panel>
   );
-});
+};
+
+/** Typing is local; the URL (and the request) updates after a pause. */
+const SearchInput = ({ value, onChange }: { value: string; onChange: (value: string) => void }) => {
+  const [draft, setDraft] = useState(value);
+  const [prevValue, setPrevValue] = useState(value);
+
+  // The URL changed from outside (reset, back button) — follow it.
+  if (value !== prevValue) {
+    setPrevValue(value);
+    if (value !== draft.trim()) setDraft(value);
+  }
+
+  useEffect(() => {
+    if (draft.trim() === value) return;
+    const timer = setTimeout(() => onChange(draft.trim()), SEARCH_DEBOUNCE_MS);
+    return () => clearTimeout(timer);
+  }, [draft, value, onChange]);
+
+  return (
+    <div className={styles.search}>
+      <Search size={16} className={styles.searchIcon} aria-hidden />
+      <Input
+        type="search"
+        placeholder="Название или хост"
+        aria-label="Поиск комнат"
+        value={draft}
+        onChange={(e) => setDraft(e.target.value)}
+      />
+    </div>
+  );
+};
 
 const PublicRoomRow = ({
   room,
@@ -202,7 +314,12 @@ const PublicRoomRow = ({
         </span>
       </div>
 
-      <Button size="sm" variant={isFull ? "ghost" : "secondary"} disabled={disabled || isFull} onClick={() => onJoin(room.code)}>
+      <Button
+        size="sm"
+        variant={isFull ? "ghost" : "secondary"}
+        disabled={disabled || isFull}
+        onClick={() => onJoin(room.code)}
+      >
         {isFull ? "Мест нет" : "Войти"}
       </Button>
     </li>

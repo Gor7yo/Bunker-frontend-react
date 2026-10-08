@@ -6,17 +6,23 @@
 
 .row {
   display: grid;
-  grid-template-columns: 120px 1fr;
+  grid-template-columns: 112px minmax(0, 1fr) auto;
+  align-items: center;
   gap: var(--space-3);
-  padding: var(--space-2) var(--space-3);
+  min-height: 36px;
+  padding: var(--space-1) var(--space-3);
   background: var(--color-bg-elevated);
   border-left: 2px solid var(--color-border);
   border-radius: var(--radius-sm);
   font-size: var(--text-sm);
 }
 
-.revealed {
-  border-left-color: var(--color-success);
+.compact .row {
+  grid-template-columns: 96px minmax(0, 1fr) auto;
+  min-height: 30px;
+  gap: var(--space-2);
+  padding: 2px var(--space-2);
+  font-size: var(--text-xs);
 }
 
 .label {
@@ -30,14 +36,40 @@
   overflow-wrap: anywhere;
 }
 
-.hidden {
+.action {
+  display: flex;
+  gap: var(--space-1);
+}
+
+/* Everyone sees it */
+.revealed {
+  border-left-color: var(--color-success);
+}
+
+/* Known to the viewer only (own card, moderator) */
+.secret .value {
+  color: var(--color-text-secondary);
+  font-style: italic;
+}
+
+/* Not known */
+.unknown .value {
   color: var(--color-text-muted);
   font-family: var(--font-mono);
 }
 
+.highlight {
+  border-left-color: var(--color-accent);
+  background: var(--color-accent-soft);
+}
+
 @media (max-width: 420px) {
-  .row {
-    grid-template-columns: 1fr;
-    gap: 2px;
+  .row,
+  .compact .row {
+    grid-template-columns: minmax(0, 1fr) auto;
+  }
+
+  .label {
+    grid-column: 1 / -1;
   }
 }

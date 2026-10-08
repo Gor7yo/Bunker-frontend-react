@@ -12,6 +12,13 @@
   min-width: 0;
 }
 
+.headerActions {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+  flex-wrap: wrap;
+}
+
 .title {
   font-size: var(--text-xl);
   overflow-wrap: anywhere;

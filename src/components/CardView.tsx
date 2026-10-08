@@ -1,3 +1,4 @@
+import type { ReactNode } from "react";
 import {
   Activity,
   Backpack,
@@ -14,7 +15,7 @@ import { CARD_KEYS, CARD_LABELS, type CardKey, type PlayerCard } from "../api/ty
 import { cx } from "./ui";
 import styles from "./CardView.module.css";
 
-const ICONS: Record<CardKey, LucideIcon> = {
+const CARD_ICONS: Record<CardKey, LucideIcon> = {
   profession: Briefcase,
   age: Cake,
   health: Activity,
@@ -26,26 +27,53 @@ const ICONS: Record<CardKey, LucideIcon> = {
 };
 
 interface CardViewProps {
+  /** Known values: own card, moderator's view, or only revealed ones. */
   card: Partial<PlayerCard>;
-  /** Keys already revealed to everyone. */
+  /** Keys revealed to everyone. */
   revealed?: CardKey[];
-  /** Show hidden rows as "???" instead of skipping them. */
+  /** Show unknown rows as "???" instead of skipping them. */
   showHidden?: boolean;
+  /** Extra controls at the end of a row (reveal button, moderator tools). */
+  action?: (key: CardKey) => ReactNode;
+  /** Highlight a row (e.g. the characteristic that must be revealed). */
+  highlight?: CardKey | null;
+  compact?: boolean;
 }
 
-export const CardView = ({ card, revealed = [], showHidden = false }: CardViewProps) => (
-  <ul className={styles.card}>
+/**
+ * Characteristics list. A row is "revealed" (everyone sees it), "secret"
+ * (known to the viewer only) or unknown ("???").
+ */
+export const CardView = ({
+  card,
+  revealed = [],
+  showHidden = false,
+  action,
+  highlight,
+  compact,
+}: CardViewProps) => (
+  <ul className={cx(styles.card, compact && styles.compact)}>
     {CARD_KEYS.map((key) => {
       const value = card[key];
+      const isRevealed = revealed.includes(key);
       if (!value && !showHidden) return null;
-      const Icon = ICONS[key];
+      const Icon = CARD_ICONS[key];
+
       return (
-        <li key={key} className={cx(styles.row, revealed.includes(key) && styles.revealed)}>
+        <li
+          key={key}
+          className={cx(
+            styles.row,
+            isRevealed ? styles.revealed : value ? styles.secret : styles.unknown,
+            highlight === key && styles.highlight,
+          )}
+        >
           <span className={styles.label}>
             <Icon size={14} />
             {CARD_LABELS[key]}
           </span>
-          <span className={value ? styles.value : styles.hidden}>{value ?? "???"}</span>
+          <span className={styles.value}>{value ?? "???"}</span>
+          {action && <span className={styles.action}>{action(key)}</span>}
         </li>
       );
     })}

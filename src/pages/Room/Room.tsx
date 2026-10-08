@@ -10,6 +10,7 @@ import { roomStore } from "../../store/roomStore";
 import { loadName } from "../../store/storage";
 import { GameScreen } from "../GameScreen/GameScreen";
 import { Lobby } from "../Lobby/Lobby";
+import { VoiceRoom } from "../../voice/VoiceRoom";
 
 /** /room/:code — lobby or game for members, a join form for invite links. */
 export const Room = observer(() => {
@@ -17,7 +18,12 @@ export const Room = observer(() => {
   const { view, resuming, connected } = roomStore;
 
   if (view?.code === code) {
-    return view.status === "LOBBY" ? <Lobby view={view} /> : <GameScreen view={view} />;
+    // VoiceRoom stays mounted across lobby → game, so voice doesn't reconnect.
+    return (
+      <VoiceRoom code={code}>
+        {view.status === "LOBBY" ? <Lobby view={view} /> : <GameScreen view={view} />}
+      </VoiceRoom>
+    );
   }
 
   if (resuming || !connected) {

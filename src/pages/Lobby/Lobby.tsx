@@ -22,6 +22,8 @@ import { SettingsForm } from "../../components/SettingsForm";
 import { Alert, Badge, Button, Page, Panel, cx } from "../../components/ui";
 import { useAction } from "../../hooks/useAction";
 import { roomStore } from "../../store/roomStore";
+import { MediaControls } from "../../voice/MediaControls";
+import { VideoStrip } from "../../voice/VideoStrip";
 import styles from "./Lobby.module.css";
 
 export const Lobby = observer(({ view }: { view: RoomView }) => {
@@ -80,10 +82,15 @@ export const Lobby = observer(({ view }: { view: RoomView }) => {
             {!connected && <Badge tone="danger">нет связи</Badge>}
           </div>
         </div>
-        <Button variant="danger" size="sm" icon={<LogOut size={14} />} onClick={leave}>
-          Выйти
-        </Button>
+        <div className={styles.headerActions}>
+          <MediaControls />
+          <Button variant="danger" size="sm" icon={<LogOut size={14} />} onClick={leave}>
+            Выйти
+          </Button>
+        </div>
       </Panel>
+
+      <VideoStrip players={view.players} canMute={isHost} />
 
       {error && <Alert onClose={() => setError(null)}>{error}</Alert>}
 

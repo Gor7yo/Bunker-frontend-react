@@ -20,6 +20,8 @@ class RoomStore {
   resuming = loadSession() !== null;
   /** One-off message for the home page (kicked, session lost, …). */
   notice: string | null = null;
+  /** serverTime − clientTime, for phase timers. */
+  clockOffset = 0;
 
   constructor() {
     makeAutoObservable(this, {}, { autoBind: true });
@@ -27,7 +29,10 @@ class RoomStore {
     socket.on("connect", this.onConnect);
     socket.on("disconnect", () => runInAction(() => (this.connected = false)));
     socket.on("room:state", (view: RoomView) =>
-      runInAction(() => (this.view = view)),
+      runInAction(() => {
+        this.view = view;
+        if (view.game) this.clockOffset = view.game.serverNow - Date.now();
+      }),
     );
     socket.on("room:kicked", () => this.drop("Хост исключил вас из комнаты"));
     socket.on("session:replaced", () =>
@@ -50,6 +55,17 @@ class RoomStore {
 
   get isModerator() {
     return this.me?.role === "MODERATOR";
+  }
+
+  /** Still in the game with a card (not exiled, not the moderator). */
+  get isAlivePlayer() {
+    const me = this.me;
+    return !!me && me.role === "PLAYER" && me.isAlive && !me.hasLeft;
+  }
+
+  /** Game and moderator commands: "game:vote", "mod:exile", … */
+  gameAction(event: `game:${string}` | `mod:${string}`, payload: object = {}) {
+    return request(event, payload);
   }
 
   async create(name: string, settings: RoomSettings) {

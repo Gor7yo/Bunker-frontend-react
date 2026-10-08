@@ -90,9 +90,75 @@ export interface RoomView {
   myCard: PlayerCard | null;
   myRevealed: CardKey[];
   players: PublicPlayer[];
+  game: GameView | null;
 }
 
 export interface SessionData {
   code: string;
   token: string;
+}
+
+// ---- game -----------------------------------------------------------------
+
+export type GamePhase =
+  | "INTRO"
+  | "REVEAL"
+  | "DISCUSSION"
+  | "VOTING"
+  | "DEFENSE"
+  | "VOTE_RESULT"
+  | "EXILE"
+  | "FINISHED";
+
+export interface Catastrophe {
+  id: string;
+  title: string;
+  description: string;
+  stay: string;
+}
+
+export interface Bunker {
+  id: string;
+  title: string;
+  description: string;
+  area: string;
+  supplies: string;
+  features: string[];
+}
+
+export interface VoteResult {
+  votes: Record<string, string>;
+  tally: Record<string, number>;
+  leaders: string[];
+}
+
+export interface GameLogEntry {
+  at: number;
+  text: string;
+  tone: "info" | "reveal" | "vote" | "exile";
+}
+
+export interface GameView {
+  catastrophe: Catastrophe;
+  bunker: Bunker;
+  seats: number;
+  round: number;
+  phase: GamePhase;
+  phaseEndsAt: number | null;
+  serverNow: number;
+  speakerId: string | null;
+  turnQueue: string[];
+  revealedThisTurn: boolean;
+  candidates: string[];
+  isRevote: boolean;
+  readyToVote: string[];
+  votedIds: string[];
+  myVote: string | null;
+  liveVotes: Record<string, string> | null;
+  lastVote: VoteResult | null;
+  lastExiledId: string | null;
+  exiledByLot: boolean;
+  requiredKey: CardKey | null;
+  aliveCount: number;
+  log: GameLogEntry[];
 }

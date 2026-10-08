@@ -1,8 +1,16 @@
 .hero {
   display: flex;
   align-items: center;
+  justify-content: space-between;
   gap: var(--space-4);
+  flex-wrap: wrap;
   padding: var(--space-6) 0 var(--space-2);
+}
+
+.brand {
+  display: flex;
+  align-items: center;
+  gap: var(--space-4);
 }
 
 .logoIcon {
@@ -22,29 +30,119 @@
   color: var(--color-text-secondary);
 }
 
-.nameInput {
-  font-size: var(--text-lg);
-}
-
-.grid {
+/* Name + private code in one row */
+.entry {
   display: grid;
-  grid-template-columns: minmax(0, 1.4fr) minmax(0, 1fr);
+  grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
   gap: var(--space-4);
-  align-items: start;
+  align-items: end;
 }
 
-.side {
+.codeForm {
   display: flex;
-  flex-direction: column;
-  gap: var(--space-4);
+  align-items: flex-end;
+  gap: var(--space-2);
 }
 
-.rooms {
-  min-height: 320px;
-}
-
-.empty {
+.codeForm > :first-child {
   flex: 1;
+}
+
+.codeInput {
+  font-family: var(--font-mono);
+  letter-spacing: 0.3em;
+  text-transform: uppercase;
+}
+
+/* Filters */
+.filters {
+  display: flex;
+  align-items: center;
+  gap: var(--space-3);
+  flex-wrap: wrap;
+}
+
+.search {
+  position: relative;
+  flex: 1 1 220px;
+}
+
+.search input {
+  padding-left: var(--space-8);
+}
+
+.searchIcon {
+  position: absolute;
+  left: var(--space-3);
+  top: 50%;
+  transform: translateY(-50%);
+  color: var(--color-text-muted);
+  pointer-events: none;
+}
+
+.segmented {
+  display: flex;
+  padding: 3px;
+  background: var(--color-bg-elevated);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-md);
+}
+
+.segment {
+  min-height: calc(var(--control-height) - 8px);
+  padding: 0 var(--space-3);
+  background: transparent;
+  border: none;
+  border-radius: var(--radius-sm);
+  color: var(--color-text-secondary);
+  font-size: var(--text-sm);
+  white-space: nowrap;
+  transition:
+    background-color var(--duration) var(--ease),
+    color var(--duration) var(--ease);
+}
+
+.segment:hover {
+  color: var(--color-text);
+}
+
+.segmentActive {
+  background: var(--color-accent-soft);
+  color: var(--color-accent);
+}
+
+.checkbox {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-2);
+  font-size: var(--text-sm);
+  color: var(--color-text-secondary);
+  cursor: pointer;
+  white-space: nowrap;
+}
+
+.checkbox input {
+  width: 16px;
+  height: 16px;
+  accent-color: var(--color-accent);
+}
+
+.sort {
+  width: auto;
+  flex: 0 0 auto;
+  font-size: var(--text-sm);
+}
+
+.found {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-2);
+  font-size: var(--text-sm);
+  color: var(--color-text-muted);
+}
+
+/* List */
+.empty {
   display: flex;
   flex-direction: column;
   align-items: center;
@@ -63,6 +161,11 @@
   display: flex;
   flex-direction: column;
   gap: var(--space-2);
+  transition: opacity var(--duration) var(--ease);
+}
+
+.stale {
+  opacity: 0.6;
 }
 
 .room {
@@ -123,27 +226,31 @@
   background: var(--color-accent);
 }
 
-.codeRow {
-  display: flex;
-  gap: var(--space-2);
-}
-
-.codeInput {
-  font-family: var(--font-mono);
-  font-size: var(--text-lg);
-  letter-spacing: 0.3em;
-  text-transform: uppercase;
-}
-
-@media (max-width: 860px) {
-  .grid {
+@media (max-width: 720px) {
+  .entry {
     grid-template-columns: 1fr;
+  }
+
+  .segmented {
+    flex: 1 1 100%;
+  }
+
+  .segment {
+    flex: 1;
   }
 }
 
 @media (max-width: 480px) {
   .hero {
     padding-top: var(--space-2);
+  }
+
+  .hero > button {
+    width: 100%;
+  }
+
+  .sort {
+    flex: 1 1 100%;
   }
 
   .room {
